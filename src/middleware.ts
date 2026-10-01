@@ -9,9 +9,14 @@ import { updateSession } from '@/lib/supabase/middleware';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public admin login page
+  // Handle /admin/login
   if (pathname === '/admin/login') {
-    return NextResponse.next();
+    const { supabaseResponse, user } = await updateSession(request);
+    // If user is already authenticated, redirect to /admin/vote
+    if (user) {
+      return NextResponse.redirect(new URL('/admin/vote', request.url));
+    }
+    return supabaseResponse;
   }
 
   // Protect all other /admin/* routes
@@ -27,7 +32,7 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // For all other routes, just refresh the session
+  // For all other routes, refresh the session
   const { supabaseResponse } = await updateSession(request);
   return supabaseResponse;
 }
