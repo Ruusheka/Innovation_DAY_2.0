@@ -1,13 +1,17 @@
 import { Navbar } from '@/components/public/Navbar';
 import { Footer } from '@/components/public/Footer';
-import { HeroSection } from '@/components/public/HeroSection';
 import { ProjectGrid } from '@/components/public/ProjectGrid';
 import { createClient } from '@/lib/supabase/server';
 import type { Department, Project } from '@/types';
 
-export const revalidate = 60; // ISR: revalidate every 60 seconds
+export const revalidate = 60;
 
-export default async function HomePage() {
+export const metadata = {
+  title: 'Projects — BUILD CLUB SSN I FOUND',
+  description: 'Browse all student projects at the SSN I FOUND project exhibition.',
+};
+
+export default async function ProjectsPage() {
   const supabase = await createClient();
 
   const [projectsRes, deptsRes] = await Promise.all([
@@ -15,8 +19,7 @@ export default async function HomePage() {
       .from('projects')
       .select(`id, project_id, title, description, project_lead, image_url, department_id, is_active, created_at, updated_at, departments(id, name, code)`)
       .eq('is_active', true)
-      .order('project_id', { ascending: true })
-      .limit(12),
+      .order('project_id', { ascending: true }),
     supabase
       .from('departments')
       .select('*')
@@ -29,7 +32,6 @@ export default async function HomePage() {
   >;
   const departments = (deptsRes.data ?? []) as Department[];
 
-  // Normalise nested department field
   const normalised = rawProjects.map((p) => ({
     ...p,
     department: p.departments ?? undefined,
@@ -38,25 +40,24 @@ export default async function HomePage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1">
-        <HeroSection />
-
-        {/* Featured projects section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="mb-12">
+      <main className="flex-1 pt-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Page header */}
+          <div className="mb-12" id="departments">
             <p className="text-[#91A9C9] text-xs font-medium tracking-[0.2em] uppercase mb-3">
-              Exhibition
+              SSN I FOUND
             </p>
-            <h2 className="text-white text-3xl sm:text-4xl font-bold">
-              Student Projects
-            </h2>
+            <h1 className="text-white text-4xl sm:text-5xl font-bold">
+              All Projects
+            </h1>
             <p className="text-[#848C9B] mt-3 max-w-xl">
-              Browse projects from all departments. Click any project to learn more.
+              {rawProjects.length} project{rawProjects.length !== 1 ? 's' : ''} across {departments.length} departments.
+              Filter by department to explore.
             </p>
           </div>
 
           <ProjectGrid projects={normalised} departments={departments} />
-        </section>
+        </div>
       </main>
       <Footer />
     </>

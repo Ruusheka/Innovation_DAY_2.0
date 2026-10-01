@@ -1,0 +1,136 @@
+// ============================================================
+// Shared TypeScript types for BUILD CLUB — SSN I FOUND
+// ============================================================
+
+export type AdminRole = 'ADMIN' | 'SUPER_ADMIN' | 'VIEWER';
+
+export interface Department {
+  id: string;
+  name: string;
+  code: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Project {
+  id: string;
+  project_id: string;
+  department_id: string;
+  title: string;
+  description: string | null;
+  project_lead: string;
+  image_url: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  department?: Department;
+}
+
+export interface Student {
+  id: string;
+  student_id: string;
+  name: string;
+  department_id: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  department?: Department;
+}
+
+export interface AdminUser {
+  id: string;
+  auth_user_id: string;
+  name: string;
+  email: string;
+  role: AdminRole;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Vote {
+  id: string;
+  student_id: string;
+  project_id: string;
+  voted_by: string;
+  id_card_verified: boolean;
+  verified_at: string;
+  created_at: string;
+  student?: Student;
+  project?: Project;
+  admin?: AdminUser;
+}
+
+export interface AuditLog {
+  id: string;
+  admin_id: string | null;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  admin?: AdminUser;
+}
+
+export interface EventSettings {
+  id: string;
+  event_name: string;
+  voting_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Leaderboard row from the leaderboard view
+export interface LeaderboardRow {
+  project_uuid: string;
+  project_id: string;
+  title: string;
+  project_lead: string;
+  department_uuid: string;
+  department_name: string;
+  department_code: string;
+  vote_count: number;
+  dept_rank: number;
+  overall_rank: number;
+}
+
+// API response types
+export interface ApiResponse<T> {
+  data: T | null;
+  error: string | null;
+}
+
+export interface StudentSearchResult {
+  student: Student & { department: Department | null };
+  hasVoted: boolean;
+}
+
+export interface VotePayload {
+  studentId: string;      // the text student ID (e.g. "3122245001127")
+  projectUuid: string;    // UUID of the project
+  departmentUuid: string; // UUID of the department
+  idCardVerified: boolean;
+}
+
+export interface ProjectFormData {
+  project_id: string;
+  department_id: string;
+  title: string;
+  description: string;
+  project_lead: string;
+  image_url?: string;
+  is_active: boolean;
+}
+
+export interface StudentImportRow {
+  student_id: string;
+  name: string;
+  department: string; // department code e.g. "CSE"
+}
+
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+  errors: string[];
+}
