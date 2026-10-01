@@ -38,16 +38,16 @@ export default function AdminLoginPage() {
       }
 
       // Verify this user is in admin_users
-      const { data: adminRecord } = await supabase
+      const { data: adminRecord, error: adminError } = await supabase
         .from('admin_users')
         .select('id, name, role, is_active')
         .eq('auth_user_id', data.user.id)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
-      if (!adminRecord) {
+      if (adminError || !adminRecord) {
         await supabase.auth.signOut();
-        setError('This account does not have admin access.');
+        setError('This account does not have admin access. Make sure your user is added to the admin_users table.');
         return;
       }
 

@@ -170,10 +170,17 @@ CREATE POLICY "public_read_event_settings"
   TO anon, authenticated
   USING (true);
 
+-- ADMIN_USERS: Authenticated users can read their own admin record
+DROP POLICY IF EXISTS "admin_users_read_own" ON admin_users;
+CREATE POLICY "admin_users_read_own"
+  ON admin_users FOR SELECT
+  TO authenticated
+  USING (auth_user_id = auth.uid() AND is_active = true);
+
 -- STUDENTS: NO public access — server-side only via service role
 -- VOTES: NO public access — server-side only via service role
--- ADMIN_USERS: NO public access — server-side only via service role
 -- AUDIT_LOGS: NO public access — server-side only via service role
+
 
 -- ============================================================
 -- UPDATED_AT TRIGGER FUNCTION
