@@ -13,7 +13,7 @@ export default async function AdminProjectsPage() {
   if (!canManageProjects(session.admin.role)) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-red-400">You do not have permission to manage projects.</p>
+        <p className="text-red-600 font-medium">You do not have permission to manage projects.</p>
       </div>
     );
   }
@@ -28,9 +28,11 @@ export default async function AdminProjectsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-white text-2xl font-bold">Projects</h1>
-        <p className="text-[#848C9B] text-sm mt-1">
-          Manage exhibition projects. Add, edit, or deactivate projects.
+        <h1 className="text-3xl sm:text-4xl font-bold text-[#041128] tracking-tight">
+          PROJECTS
+        </h1>
+        <p className="text-[#41516B] text-base mt-1.5">
+          Manage exhibition projects across departments. Add, edit, or deactivate projects.
         </p>
       </div>
 

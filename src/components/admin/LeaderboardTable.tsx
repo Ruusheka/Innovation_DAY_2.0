@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, TrendingUp, Filter } from 'lucide-react';
+import { Trophy, Activity, Filter, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils/cn';
 import type { LeaderboardRow, Department } from '@/types';
@@ -26,9 +26,9 @@ function AnimatedCount({ value }: { value: number }) {
   return (
     <motion.span
       key={displayed}
-      initial={{ opacity: 0, y: -6 }}
+      initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.25 }}
       className="tabular-nums"
     >
       {displayed.toLocaleString()}
@@ -36,10 +36,10 @@ function AnimatedCount({ value }: { value: number }) {
   );
 }
 
-const RANK_STYLES: Record<number, string> = {
-  1: 'text-amber-400 font-bold',
-  2: 'text-slate-300 font-semibold',
-  3: 'text-amber-700 font-semibold',
+const RANK_BADGES: Record<number, { bg: string; text: string }> = {
+  1: { bg: 'bg-amber-100 text-amber-900 border-amber-300 font-bold', text: '#1' },
+  2: { bg: 'bg-slate-100 text-slate-800 border-slate-300 font-semibold', text: '#2' },
+  3: { bg: 'bg-orange-50 text-orange-800 border-orange-200 font-semibold', text: '#3' },
 };
 
 export function LeaderboardTable({
@@ -60,15 +60,15 @@ export function LeaderboardTable({
       setRows(json.data ?? []);
       setTotal(json.totalVotes ?? 0);
     } catch {
-      // silent — realtime will retry
+      // silent retry
     }
   }, []);
 
-  // Supabase Realtime subscription on votes table
+  // Supabase Realtime subscription
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
-      .channel('votes-changes')
+      .channel('admin-votes-live')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'votes' },
@@ -98,55 +98,67 @@ export function LeaderboardTable({
   }, {});
 
   return (
-    <div className="space-y-6">
-      {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div className="glass rounded-xl p-5 border border-white/10">
-          <div className="text-[#848C9B] text-xs uppercase tracking-widest mb-1">Total Votes</div>
-          <div className="text-white text-3xl font-bold">
+    <div className="space-y-8">
+      {/* ── Top Stat Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="bg-white rounded-[20px] p-6 border border-[rgba(4,17,40,0.08)] shadow-[0_4px_20px_rgba(4,17,40,0.03)]">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[#848C9B] mb-1">
+            Total Votes Cast
+          </div>
+          <div className="text-[#041128] text-4xl font-bold tracking-tight">
             <AnimatedCount value={total} />
           </div>
         </div>
-        <div className="glass rounded-xl p-5 border border-white/10">
-          <div className="text-[#848C9B] text-xs uppercase tracking-widest mb-1">Projects</div>
-          <div className="text-white text-3xl font-bold">{rows.length}</div>
+
+        <div className="bg-white rounded-[20px] p-6 border border-[rgba(4,17,40,0.08)] shadow-[0_4px_20px_rgba(4,17,40,0.03)]">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[#848C9B] mb-1">
+            Exhibition Projects
+          </div>
+          <div className="text-[#041128] text-4xl font-bold tracking-tight">
+            {rows.length}
+          </div>
         </div>
-        <div className="glass rounded-xl p-5 border border-white/10 flex items-center gap-3 col-span-2 sm:col-span-1">
+
+        <div className="bg-white rounded-[20px] p-6 border border-[rgba(4,17,40,0.08)] shadow-[0_4px_20px_rgba(4,17,40,0.03)] flex items-center gap-4">
           <div
             className={cn(
-              'w-2.5 h-2.5 rounded-full',
-              isLive ? 'bg-green-400 animate-pulse' : 'bg-[#848C9B]'
+              'w-3.5 h-3.5 rounded-full shrink-0',
+              isLive ? 'bg-green-500 animate-pulse' : 'bg-[#91A9C9]'
             )}
           />
           <div>
-            <div className="text-white text-sm font-medium">{isLive ? 'Live' : 'Connecting...'}</div>
-            <div className="text-[#848C9B] text-xs">Real-time updates</div>
+            <div className="text-[#041128] font-bold text-base">
+              {isLive ? 'Live Realtime Active' : 'Connecting Realtime...'}
+            </div>
+            <div className="text-xs text-[#848C9B] mt-0.5">
+              Live updates as votes are submitted
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Department filter */}
-      <div className="flex flex-wrap gap-2">
+      {/* ── Department Filters ── */}
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setActiveDept(null)}
           className={cn(
-            'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
+            'px-5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer border',
             !activeDept
-              ? 'bg-[#91A9C9] text-[#040411]'
-              : 'text-[#848C9B] glass border border-white/10 hover:border-[#91A9C9]/30'
+              ? 'bg-[#041128] text-white border-[#041128]'
+              : 'bg-white text-[#41516B] border-[rgba(4,17,40,0.12)] hover:bg-[#EBF1F8]'
           )}
         >
-          All
+          All Departments
         </button>
         {departments.map((d) => (
           <button
             key={d.id}
             onClick={() => setActiveDept(activeDept === d.id ? null : d.id)}
             className={cn(
-              'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
+              'px-5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer border',
               activeDept === d.id
-                ? 'bg-[#91A9C9] text-[#040411]'
-                : 'text-[#848C9B] glass border border-white/10 hover:border-[#91A9C9]/30'
+                ? 'bg-[#041128] text-white border-[#041128]'
+                : 'bg-white text-[#41516B] border-[rgba(4,17,40,0.12)] hover:bg-[#EBF1F8]'
             )}
           >
             {d.code}
@@ -154,68 +166,101 @@ export function LeaderboardTable({
         ))}
       </div>
 
-      {/* Leaderboard by department */}
+      {/* ── Leaderboard Tables Grouped by Department ── */}
       {Object.keys(byDept).length === 0 ? (
-        <div className="py-20 text-center text-[#848C9B]">
-          No votes have been recorded yet.
+        <div className="bg-white rounded-[20px] p-16 text-center border border-[rgba(4,17,40,0.08)]">
+          <p className="text-[#041128] font-semibold text-lg">No votes recorded yet.</p>
+          <p className="text-sm text-[#848C9B] mt-1">
+            As registration operators record votes, rankings will appear live.
+          </p>
         </div>
       ) : (
         <div className="space-y-8">
           {Object.entries(byDept).map(([deptCode, deptRows]) => {
             const sortedRows = [...deptRows].sort((a, b) => b.vote_count - a.vote_count);
+            const deptTotal = sortedRows.reduce((acc, r) => acc + r.vote_count, 0);
+
             return (
-              <div key={deptCode} className="glass rounded-2xl border border-white/10 overflow-hidden">
-                {/* Dept header */}
-                <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                  <h3 className="text-white font-semibold text-sm">
-                    {sortedRows[0]?.department_name}
-                    <span className="ml-2 text-[#91A9C9] font-mono text-xs">({deptCode})</span>
-                  </h3>
-                  <span className="text-[#848C9B] text-xs">
-                    {sortedRows.reduce((s, r) => s + r.vote_count, 0)} votes
-                  </span>
+              <div
+                key={deptCode}
+                className="bg-white rounded-[22px] border border-[rgba(4,17,40,0.08)] overflow-hidden shadow-[0_4px_20px_rgba(4,17,40,0.02)]"
+              >
+                {/* Dept header bar */}
+                <div className="px-6 sm:px-8 py-4.5 bg-[#FAF9F5] border-b border-[rgba(4,17,40,0.06)] flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-base font-bold text-[#041128]">
+                      {sortedRows[0]?.department_name}
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#E8EFF7] text-[#041128] text-xs font-mono font-semibold">
+                      {deptCode}
+                    </span>
+                  </div>
+                  <div className="text-xs font-semibold text-[#41516B]">
+                    {deptTotal} total vote{deptTotal !== 1 ? 's' : ''}
+                  </div>
                 </div>
 
                 {/* Table */}
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full text-left">
                     <thead>
-                      <tr className="border-b border-white/5">
-                        <th className="px-6 py-3 text-left text-[#848C9B] text-xs uppercase tracking-widest font-medium">Rank</th>
-                        <th className="px-4 py-3 text-left text-[#848C9B] text-xs uppercase tracking-widest font-medium">ID</th>
-                        <th className="px-4 py-3 text-left text-[#848C9B] text-xs uppercase tracking-widest font-medium">Project</th>
-                        <th className="px-4 py-3 text-left text-[#848C9B] text-xs uppercase tracking-widest font-medium hidden sm:table-cell">Lead</th>
-                        <th className="px-6 py-3 text-right text-[#848C9B] text-xs uppercase tracking-widest font-medium">Votes</th>
+                      <tr className="border-b border-[rgba(4,17,40,0.06)] bg-white text-xs uppercase tracking-wider text-[#848C9B]">
+                        <th className="px-6 sm:px-8 py-3.5 font-semibold">Rank</th>
+                        <th className="px-4 py-3.5 font-semibold">Project ID</th>
+                        <th className="px-4 py-3.5 font-semibold">Project Title</th>
+                        <th className="px-4 py-3.5 font-semibold hidden md:table-cell">Project Lead</th>
+                        <th className="px-6 sm:px-8 py-3.5 font-semibold text-right">Votes</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-[rgba(4,17,40,0.04)] text-sm">
                       <AnimatePresence initial={false}>
                         {sortedRows.map((row, i) => {
                           const rank = i + 1;
+                          const badge = RANK_BADGES[rank];
+
                           return (
                             <motion.tr
                               key={row.project_uuid}
                               layout
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
-                              className="border-b border-white/5 last:border-0 hover:bg-white/2 transition-colors"
+                              className="hover:bg-[#FAF9F5] transition-colors"
                             >
-                              <td className="px-6 py-4">
-                                <span className={cn('text-sm', RANK_STYLES[rank] ?? 'text-[#848C9B]')}>
-                                  #{rank}
+                              {/* Rank */}
+                              <td className="px-6 sm:px-8 py-4">
+                                {badge ? (
+                                  <span className={cn('px-2.5 py-1 rounded-full text-xs border', badge.bg)}>
+                                    {badge.text}
+                                  </span>
+                                ) : (
+                                  <span className="text-[#848C9B] font-medium text-xs pl-2">
+                                    #{rank}
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Project ID */}
+                              <td className="px-4 py-4">
+                                <span className="font-mono font-semibold text-[#041128] text-xs px-2 py-1 rounded bg-[#FAF9F5] border border-[rgba(4,17,40,0.08)]">
+                                  {row.project_id}
                                 </span>
                               </td>
+
+                              {/* Project Title */}
                               <td className="px-4 py-4">
-                                <span className="text-[#91A9C9] font-mono text-xs">{row.project_id}</span>
+                                <span className="font-semibold text-[#041128]">
+                                  {row.title}
+                                </span>
                               </td>
-                              <td className="px-4 py-4">
-                                <span className="text-white text-sm">{row.title}</span>
+
+                              {/* Project Lead */}
+                              <td className="px-4 py-4 hidden md:table-cell text-[#41516B]">
+                                {row.project_lead}
                               </td>
-                              <td className="px-4 py-4 hidden sm:table-cell">
-                                <span className="text-[#848C9B] text-sm">{row.project_lead}</span>
-                              </td>
-                              <td className="px-6 py-4 text-right">
-                                <span className="text-white font-bold text-lg">
+
+                              {/* Votes */}
+                              <td className="px-6 sm:px-8 py-4 text-right">
+                                <span className="text-xl font-bold text-[#041128]">
                                   <AnimatedCount value={row.vote_count} />
                                 </span>
                               </td>

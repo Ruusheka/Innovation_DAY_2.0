@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils/cn';
 import type { Department, Project } from '@/types';
@@ -9,7 +9,7 @@ import type { StudentInfo } from './StudentSearch';
 
 interface VoteFormProps {
   student: StudentInfo;
-  onSuccess: () => void;
+  onSuccess: (studentName: string, projectName: string) => void;
 }
 
 export function VoteForm({ student, onSuccess }: VoteFormProps) {
@@ -75,7 +75,7 @@ export function VoteForm({ student, onSuccess }: VoteFormProps) {
       if (!res.ok) {
         if (res.status === 409) {
           toast.error('THIS STUDENT HAS ALREADY VOTED.', {
-            description: 'The vote was rejected by the system.',
+            description: 'The database rejected the duplicate submission.',
           });
         } else {
           toast.error(json.error ?? 'Failed to record vote.');
@@ -83,8 +83,9 @@ export function VoteForm({ student, onSuccess }: VoteFormProps) {
         return;
       }
 
+      const selectedProj = projects.find((p) => p.id === selectedProjectId);
       toast.success('Vote recorded successfully.');
-      onSuccess();
+      onSuccess(student.name, selectedProj?.title ?? 'Project');
     } catch {
       toast.error('Network error. Please try again.');
     } finally {
@@ -94,12 +95,12 @@ export function VoteForm({ student, onSuccess }: VoteFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* ID Card Verification */}
-      <div className="p-5 rounded-xl border border-white/10 bg-[#041128]/40">
-        <p className="text-[#848C9B] text-xs uppercase tracking-widest font-medium mb-4">
+      {/* ── 1. ID CARD VERIFICATION ── */}
+      <div className="p-5 rounded-[16px] border border-[rgba(4,17,40,0.1)] bg-[#FFFFFF]">
+        <div className="text-xs font-semibold uppercase tracking-wider text-[#041128] mb-3">
           ID Card Verification
-        </p>
-        <label className="flex items-start gap-3 cursor-pointer group">
+        </div>
+        <label className="flex items-start gap-3.5 cursor-pointer group select-none">
           <div className="relative mt-0.5">
             <input
               type="checkbox"
@@ -109,41 +110,33 @@ export function VoteForm({ student, onSuccess }: VoteFormProps) {
             />
             <div
               className={cn(
-                'w-5 h-5 rounded border-2 flex items-center justify-center transition-all',
+                'w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all',
                 idCardVerified
-                  ? 'bg-[#91A9C9] border-[#91A9C9]'
-                  : 'border-white/20 bg-transparent group-hover:border-[#91A9C9]/50'
+                  ? 'bg-[#041128] border-[#041128]'
+                  : 'border-[rgba(4,17,40,0.3)] bg-white group-hover:border-[#041128]'
               )}
             >
-              {idCardVerified && (
-                <svg
-                  viewBox="0 0 12 10"
-                  className="w-3 h-3 fill-none stroke-[#040411] stroke-2"
-                >
-                  <polyline points="1 5 4.5 8.5 11 1" />
-                </svg>
-              )}
+              {idCardVerified && <Check size={14} className="text-white stroke-[3]" />}
             </div>
           </div>
           <div>
-            <div className="text-white text-sm font-medium">
+            <div className="text-sm font-semibold text-[#041128]">
               I have verified the student&apos;s physical college ID card.
             </div>
-            <div className="text-[#848C9B] text-xs mt-1">
-              Student ID: <span className="font-mono text-[#B2B4AB]">{student.student_id}</span>
-              {' — '}Name: <span className="text-[#B2B4AB]">{student.name}</span>
+            <div className="text-xs text-[#848C9B] mt-0.5">
+              Confirming student identity for Roll No: <span className="font-mono text-[#041128] font-medium">{student.student_id}</span>
             </div>
           </div>
         </label>
       </div>
 
-      {/* Department + Project Selectors */}
-      <div className="space-y-4">
+      {/* ── 2. DEPARTMENT & PROJECT SELECTORS ── */}
+      <div className="grid sm:grid-cols-2 gap-4">
         {/* Department */}
         <div>
           <label
             htmlFor="dept-select"
-            className="block text-xs font-medium text-[#848C9B] uppercase tracking-widest mb-2"
+            className="block text-xs font-semibold text-[#041128] uppercase tracking-wider mb-2"
           >
             Vote For Department
           </label>
@@ -153,8 +146,8 @@ export function VoteForm({ student, onSuccess }: VoteFormProps) {
             onChange={(e) => setSelectedDeptId(e.target.value)}
             disabled={loadingDepts || !idCardVerified}
             className={cn(
-              'input-base',
-              (!idCardVerified || loadingDepts) && 'opacity-50 cursor-not-allowed'
+              'input-clean text-sm font-medium',
+              (!idCardVerified || loadingDepts) && 'opacity-50 cursor-not-allowed bg-slate-50'
             )}
           >
             <option value="">
@@ -172,9 +165,9 @@ export function VoteForm({ student, onSuccess }: VoteFormProps) {
         <div>
           <label
             htmlFor="project-select"
-            className="block text-xs font-medium text-[#848C9B] uppercase tracking-widest mb-2"
+            className="block text-xs font-semibold text-[#041128] uppercase tracking-wider mb-2"
           >
-            Project
+            Select Project
           </label>
           <select
             id="project-select"
@@ -182,17 +175,17 @@ export function VoteForm({ student, onSuccess }: VoteFormProps) {
             onChange={(e) => setSelectedProjectId(e.target.value)}
             disabled={!selectedDeptId || loadingProjects || !idCardVerified}
             className={cn(
-              'input-base',
-              (!selectedDeptId || !idCardVerified) && 'opacity-50 cursor-not-allowed'
+              'input-clean text-sm font-medium',
+              (!selectedDeptId || !idCardVerified) && 'opacity-50 cursor-not-allowed bg-slate-50'
             )}
           >
             <option value="">
               {loadingProjects
                 ? 'Loading projects...'
                 : !selectedDeptId
-                ? 'Select a department first'
+                ? 'Select department first'
                 : projects.length === 0
-                ? 'No active projects in this department'
+                ? 'No active projects in department'
                 : 'Select Project'}
             </option>
             {projects.map((p) => (
@@ -204,29 +197,31 @@ export function VoteForm({ student, onSuccess }: VoteFormProps) {
         </div>
       </div>
 
-      {/* Submit */}
+      {/* ── 3. CAST VOTE CTA ── */}
       <button
         type="submit"
         disabled={!canSubmit}
         className={cn(
-          'w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all',
-          'bg-[#91A9C9] text-[#040411]',
-          canSubmit ? 'hover:opacity-90 hover:-translate-y-0.5 shadow-lg shadow-[#91A9C9]/20' : 'opacity-30 cursor-not-allowed'
+          'w-full h-14 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-md',
+          'bg-[#041128] text-white',
+          canSubmit
+            ? 'hover:bg-[#112244] hover:shadow-lg cursor-pointer'
+            : 'opacity-35 cursor-not-allowed'
         )}
       >
         {submitting ? (
           <>
             <Loader2 size={18} className="animate-spin" />
-            Recording Vote...
+            <span>RECORDING VOTE...</span>
           </>
         ) : (
-          'Cast Vote'
+          <span>CAST VOTE</span>
         )}
       </button>
 
       {!idCardVerified && (
-        <p className="text-center text-[#848C9B]/60 text-xs">
-          Verify the ID card above to enable voting.
+        <p className="text-center text-[#848C9B] text-xs">
+          Verify physical ID card above to unlock voting controls.
         </p>
       )}
     </form>

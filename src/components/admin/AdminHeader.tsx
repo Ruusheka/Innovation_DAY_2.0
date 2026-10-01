@@ -8,7 +8,6 @@ import { SuperAdminControls } from './SuperAdminControls';
 import type { AdminUser, EventSettings } from '@/types';
 import { cn } from '@/lib/utils/cn';
 
-
 interface AdminHeaderProps {
   admin: AdminUser;
   title?: string;
@@ -17,14 +16,14 @@ interface AdminHeaderProps {
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Admin',
+  ADMIN: 'Admin Operator',
   VIEWER: 'Viewer',
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  SUPER_ADMIN: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
-  ADMIN: 'text-[#91A9C9] bg-[#91A9C9]/10 border-[#91A9C9]/20',
-  VIEWER: 'text-[#848C9B] bg-white/5 border-white/10',
+  SUPER_ADMIN: 'text-amber-800 bg-amber-50 border-amber-200',
+  ADMIN: 'text-[#041128] bg-[#E8EFF7] border-[#91A9C9]/60',
+  VIEWER: 'text-[#848C9B] bg-slate-50 border-slate-200',
 };
 
 export function AdminHeader({ admin, title, eventSettings }: AdminHeaderProps) {
@@ -43,18 +42,20 @@ export function AdminHeader({ admin, title, eventSettings }: AdminHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/5 bg-[#040411]/80 backdrop-blur-sm px-4 lg:px-6 py-4">
+    <header className="sticky top-0 z-20 border-b border-[rgba(4,17,40,0.06)] bg-white/90 backdrop-blur-md px-6 lg:px-10 py-4">
       <div className="flex items-center justify-between">
-        {/* Page title */}
+        {/* Title */}
         <div>
           {title && (
-            <h1 className="text-white font-semibold text-lg">{title}</h1>
+            <h1 className="text-[#041128] font-semibold text-lg sm:text-xl tracking-tight">
+              {title}
+            </h1>
           )}
         </div>
 
-        {/* Admin info + logout */}
-        <div className="flex items-center gap-3">
-          {/* Super Admin controls */}
+        {/* Right side controls */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Super Admin settings dropdown */}
           {admin.role === 'SUPER_ADMIN' && eventSettings && (
             <SuperAdminControls admin={admin} eventSettings={eventSettings} />
           )}
@@ -62,38 +63,29 @@ export function AdminHeader({ admin, title, eventSettings }: AdminHeaderProps) {
           {/* Role badge */}
           <span
             className={cn(
-              'hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
+              'hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border',
               ROLE_COLORS[admin.role] ?? ROLE_COLORS.ADMIN
             )}
           >
-            <Shield size={10} />
+            <Shield size={12} />
             {ROLE_LABELS[admin.role] ?? admin.role}
           </span>
 
-          {/* Name */}
+          {/* Admin name */}
           <div className="hidden sm:block text-right">
-            <div className="text-white text-sm font-medium leading-none">{admin.name}</div>
-            <div className="text-[#848C9B] text-xs mt-0.5">{admin.email}</div>
-          </div>
-
-
-          {/* Mobile: just show initials */}
-          <div className="sm:hidden w-8 h-8 rounded-full bg-[#91A9C9]/10 border border-[#91A9C9]/20 flex items-center justify-center text-[#91A9C9] text-xs font-bold">
-            {admin.name
-              .split(' ')
-              .map((n) => n[0])
-              .join('')
-              .slice(0, 2)
-              .toUpperCase()}
+            <div className="text-[#041128] text-sm font-semibold leading-tight">
+              {admin.name}
+            </div>
+            <div className="text-[#848C9B] text-xs">{admin.email}</div>
           </div>
 
           {/* Logout button */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[#848C9B] hover:text-red-400 hover:bg-red-400/5 border border-transparent hover:border-red-400/20 text-xs font-medium transition-all"
-            title="Logout"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#848C9B] hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all cursor-pointer"
+            title="Sign out"
           >
-            <LogOut size={14} />
+            <LogOut size={15} />
             <span className="hidden sm:inline">Logout</span>
           </button>
         </div>

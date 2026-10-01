@@ -12,71 +12,73 @@ interface StudentDetailsProps {
 export function StudentDetails({ student, hasVoted }: StudentDetailsProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="rounded-xl border border-white/10 bg-[#041128]/60 overflow-hidden"
+      className="rounded-[18px] border border-[rgba(4,17,40,0.08)] bg-[#FAF9F5] overflow-hidden"
     >
       {/* Header status bar */}
       <div
-        className={`px-5 py-3 flex items-center gap-2 text-sm font-medium ${
+        className={`px-6 py-3.5 flex items-center gap-2 text-sm font-semibold ${
           hasVoted
-            ? 'bg-amber-400/10 border-b border-amber-400/20 text-amber-400'
-            : 'bg-[#91A9C9]/10 border-b border-[#91A9C9]/20 text-[#91A9C9]'
+            ? 'bg-amber-50 border-b border-amber-200 text-amber-800'
+            : 'bg-[#E8EFF7] border-b border-[#91A9C9]/50 text-[#041128]'
         }`}
       >
         {hasVoted ? (
           <>
-            <AlertCircle size={15} />
-            Student Found — Already Voted
+            <AlertCircle size={17} className="text-amber-600" />
+            <span>Student Record Found — Already Voted</span>
           </>
         ) : (
           <>
-            <CheckCircle2 size={15} />
-            Student Verified ✓
+            <CheckCircle2 size={17} className="text-[#2E7D32]" />
+            <span>STUDENT VERIFIED ✓</span>
           </>
         )}
       </div>
 
-      {/* Details */}
-      <div className="px-5 py-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Details Grid */}
+      <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div>
-          <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-widest mb-1">
-            <Hash size={10} />
+          <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-wider font-semibold mb-1">
+            <Hash size={12} />
             Student ID
           </div>
-          <div className="text-white font-mono font-medium text-base">
+          <div className="text-[#041128] font-mono font-bold text-base">
             {student.student_id}
           </div>
         </div>
 
         <div>
-          <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-widest mb-1">
-            <User size={10} />
+          <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-wider font-semibold mb-1">
+            <User size={12} />
             Name
           </div>
-          <div className="text-white font-medium text-base">{student.name}</div>
+          <div className="text-[#041128] font-semibold text-base">
+            {student.name}
+          </div>
         </div>
 
         <div>
-          <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-widest mb-1">
-            <Building2 size={10} />
+          <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-wider font-semibold mb-1">
+            <Building2 size={12} />
             Department
           </div>
-          <div className="text-white font-medium text-base">
-            {student.departments?.code ?? '—'}
+          <div className="text-[#041128] font-semibold text-base">
+            {student.departments?.name ?? student.departments?.code ?? '—'}
           </div>
         </div>
       </div>
 
-      {/* Already voted warning */}
+      {/* Already voted warning message */}
       {hasVoted && (
-        <div className="mx-5 mb-5 px-4 py-3 rounded-lg bg-amber-400/5 border border-amber-400/20">
-          <p className="text-amber-400 text-sm font-medium">
+        <div className="mx-6 mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200">
+          <p className="text-amber-900 text-sm font-bold">
             ⚠ THIS STUDENT HAS ALREADY VOTED.
           </p>
-          <p className="text-amber-400/70 text-xs mt-1">
-            Please verify the student ID with their ID card and contact a supervisor if needed.
+          <p className="text-amber-800 text-xs mt-1">
+            One student is permitted to cast exactly one vote. Please verify the physical ID card.
           </p>
         </div>
       )}

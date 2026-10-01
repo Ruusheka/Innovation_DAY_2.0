@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: 'BUILD CLUB — SSN I FOUND | Project Exhibition',
   description:
     'Explore innovative student projects from SSN College of Engineering. BUILD CLUB Project Exhibition Portal.',
-  keywords: ['SSN', 'Build Club', 'I FOUND', 'Project Exhibition', 'Student Projects'],
+  keywords: ['SSN', 'Build Club', 'I FOUND', 'Project Exhibition', 'Student Projects', 'Engineering'],
   openGraph: {
     title: 'BUILD CLUB — SSN I FOUND',
     description: 'Explore what SSN students build.',
@@ -35,16 +35,17 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#040411] text-[#B2B4AB]">
+      <body className="min-h-full flex flex-col bg-[#FAF9F5] text-[#041128]">
         {children}
         <Toaster
-          theme="dark"
+          theme="light"
           position="top-right"
           toastOptions={{
             style: {
-              background: '#041128',
-              border: '1px solid rgba(255,255,255,0.10)',
-              color: '#B2B4AB',
+              background: '#FFFFFF',
+              border: '1px solid rgba(4, 17, 40, 0.12)',
+              color: '#041128',
+              boxShadow: '0 10px 30px rgba(4, 17, 40, 0.08)',
             },
           }}
         />

@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 import { motion } from 'motion/react';
-import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
+import { Loader2, LogIn, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
@@ -47,7 +49,7 @@ export default function AdminLoginPage() {
 
       if (adminError || !adminRecord) {
         await supabase.auth.signOut();
-        setError('This account does not have admin access. Make sure your user is added to the admin_users table.');
+        setError('This account does not have admin access. Please contact the administrator.');
         return;
       }
 
@@ -62,25 +64,43 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#040411] bg-ambient bg-grid flex items-center justify-center p-4">
-      {/* Ambient glow */}
-      <div className="pointer-events-none fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#91A9C9]/5 blur-[120px]" />
+    <div className="min-h-screen bg-[#FAF9F5] flex flex-col justify-between p-6">
+      {/* Top back navigation */}
+      <div className="max-w-[1200px] w-full mx-auto">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm font-medium text-[#41516B] hover:text-[#041128] transition-colors"
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Exhibition</span>
+        </Link>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="relative w-full max-w-sm"
-      >
-        {/* Card */}
-        <div className="glass border border-white/10 rounded-2xl p-8">
-          {/* Brand */}
+      {/* Center login card */}
+      <div className="w-full max-w-md mx-auto my-auto py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          className="bg-white rounded-[24px] border border-[rgba(4,17,40,0.08)] p-8 sm:p-10 shadow-[0_12px_40px_rgba(4,17,40,0.06)]"
+        >
+          {/* Logo & Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#91A9C9]/10 border border-[#91A9C9]/20 mb-4">
-              <span className="text-[#91A9C9] font-bold text-base font-mono">BC</span>
+            <div className="relative h-12 w-48 mx-auto mb-4">
+              <Image
+                src="/logo.png"
+                alt="BUILD CLUB Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
-            <h1 className="text-white font-semibold text-xl">Admin Portal</h1>
-            <p className="text-[#848C9B] text-sm mt-1">BUILD CLUB — SSN I FOUND</p>
+            <h1 className="text-2xl font-semibold text-[#041128] tracking-tight">
+              Admin Portal
+            </h1>
+            <p className="text-sm text-[#848C9B] mt-1">
+              Sign in to manage votes, projects & leaderboard
+            </p>
           </div>
 
           {/* Form */}
@@ -88,9 +108,9 @@ export default function AdminLoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-xs font-medium text-[#848C9B] uppercase tracking-widest mb-2"
+                className="block text-xs font-semibold text-[#041128] uppercase tracking-wider mb-2"
               >
-                Email
+                Email Address
               </label>
               <input
                 id="email"
@@ -100,7 +120,7 @@ export default function AdminLoginPage() {
                 placeholder="admin@ssn.edu.in"
                 autoComplete="email"
                 required
-                className="input-base"
+                className="input-clean"
                 disabled={loading}
               />
             </div>
@@ -108,7 +128,7 @@ export default function AdminLoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-xs font-medium text-[#848C9B] uppercase tracking-widest mb-2"
+                className="block text-xs font-semibold text-[#041128] uppercase tracking-wider mb-2"
               >
                 Password
               </label>
@@ -121,58 +141,56 @@ export default function AdminLoginPage() {
                   placeholder="••••••••"
                   autoComplete="current-password"
                   required
-                  className="input-base pr-10"
+                  className="input-clean pr-11"
                   disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#848C9B] hover:text-white transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#848C9B] hover:text-[#041128] transition-colors"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
             </div>
 
-            {/* Error */}
+            {/* Error Message */}
             {error && (
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-red-400 text-sm bg-red-400/5 border border-red-400/20 rounded-lg px-3 py-2"
+                className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm"
               >
                 {error}
-              </motion.p>
+              </motion.div>
             )}
 
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full py-3.5 bg-[#91A9C9] text-[#040411] font-semibold rounded-xl hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 mt-2"
+              className="w-full mt-2 h-12 rounded-xl bg-[#041128] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#112244] disabled:opacity-40 transition-all cursor-pointer shadow-md shadow-[#041128]/10"
             >
               {loading ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  Signing in...
+                  <span>Signing In...</span>
                 </>
               ) : (
                 <>
                   <LogIn size={16} />
-                  Sign In
+                  <span>Sign In</span>
                 </>
               )}
             </button>
           </form>
-        </div>
+        </motion.div>
+      </div>
 
-        {/* Back to public */}
-        <p className="text-center text-[#848C9B]/50 text-xs mt-6">
-          <a href="/" className="hover:text-[#91A9C9] transition-colors">
-            ← Back to public site
-          </a>
-        </p>
-      </motion.div>
+      {/* Footer copyright */}
+      <div className="text-center text-xs text-[#848C9B] py-4">
+        © {new Date().getFullYear()} BUILD CLUB SSN. Authorized Registration Access Only.
+      </div>
     </div>
   );
 }

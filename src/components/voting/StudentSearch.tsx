@@ -24,7 +24,7 @@ export function StudentSearch({ onResult, loading, setLoading, disabled }: Stude
   const inputRef = useRef<HTMLInputElement>(null);
   const [studentId, setStudentId] = useState('');
 
-  // Auto-focus on mount
+  // Auto-focus on mount for registration desk speed
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
@@ -60,64 +60,57 @@ export function StudentSearch({ onResult, loading, setLoading, disabled }: Stude
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label
-          htmlFor="student-id-input"
-          className="block text-xs font-medium text-[#848C9B] uppercase tracking-widest mb-2"
+    <div className="space-y-3">
+      <label
+        htmlFor="student-id-input"
+        className="block text-xs font-semibold text-[#041128] uppercase tracking-wider"
+      >
+        Student Roll Number / ID
+      </label>
+      <div className="flex gap-3">
+        <input
+          id="student-id-input"
+          ref={inputRef}
+          type="text"
+          value={studentId}
+          onChange={(e) => setStudentId(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="e.g. 3122245001127"
+          disabled={disabled || loading}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
+          className={cn(
+            'flex-1 input-clean font-mono text-lg font-medium',
+            (disabled || loading) && 'opacity-50 cursor-not-allowed'
+          )}
+          aria-label="Enter student ID"
+        />
+        <button
+          onClick={handleSearch}
+          disabled={!studentId.trim() || loading || disabled}
+          className="px-7 py-3 rounded-xl bg-[#041128] text-white font-semibold text-sm flex items-center gap-2 hover:bg-[#112244] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 shadow-sm"
+          aria-label="Search student"
         >
-          Student ID
-        </label>
-        <div className="flex gap-3">
-          <input
-            id="student-id-input"
-            ref={inputRef}
-            type="text"
-            value={studentId}
-            onChange={(e) => setStudentId(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="e.g. 3122245001127"
-            disabled={disabled || loading}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck="false"
-            className={cn(
-              'flex-1 input-base text-white font-mono text-lg',
-              (disabled || loading) && 'opacity-50 cursor-not-allowed'
-            )}
-            aria-label="Enter student ID"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={!studentId.trim() || loading || disabled}
-            className={cn(
-              'px-6 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all',
-              'bg-[#91A9C9] text-[#040411] hover:opacity-90',
-              'disabled:opacity-40 disabled:cursor-not-allowed'
-            )}
-            aria-label="Search student"
-          >
-            {loading ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Searching...
-              </>
-            ) : (
-              <>
-                <Search size={16} />
-                Search
-              </>
-            )}
-          </button>
-        </div>
-        <p className="mt-2 text-[#848C9B]/60 text-xs">
-          Press Enter or click Search
-        </p>
+          {loading ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              <span>Searching...</span>
+            </>
+          ) : (
+            <>
+              <Search size={16} />
+              <span>Search</span>
+            </>
+          )}
+        </button>
       </div>
+      <p className="text-xs text-[#848C9B]">
+        Press <kbd className="px-1.5 py-0.5 rounded bg-[#FAF9F5] border border-[rgba(4,17,40,0.15)] text-[#041128] font-mono">Enter</kbd> to search student registry
+      </p>
     </div>
   );
 }
 
-// Export the type for use by parent
 export type { StudentInfo };

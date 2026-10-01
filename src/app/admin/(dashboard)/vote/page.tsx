@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { StudentSearch, type StudentInfo } from '@/components/voting/StudentSearch';
 import { StudentDetails } from '@/components/voting/StudentDetails';
@@ -17,6 +17,7 @@ interface SearchResult {
 export default function AdminVotePage() {
   const [stage, setStage] = useState<Stage>('search');
   const [result, setResult] = useState<SearchResult | null>(null);
+  const [recordedProject, setRecordedProject] = useState<string>('');
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
 
@@ -31,29 +32,34 @@ export default function AdminVotePage() {
     []
   );
 
-  const handleVoteSuccess = useCallback(() => {
+  const handleVoteSuccess = useCallback((_studentName: string, projectName: string) => {
+    setRecordedProject(projectName);
     setStage('success');
   }, []);
 
   const handleNextStudent = useCallback(() => {
     setResult(null);
     setSearchError(null);
+    setRecordedProject('');
     setStage('search');
   }, []);
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Page header */}
+    <div className="max-w-3xl mx-auto py-4 sm:py-8">
+      {/* ── Page Header ── */}
       <div className="mb-8">
-        <h1 className="text-white text-2xl font-bold">Register Vote</h1>
-        <p className="text-[#848C9B] text-sm mt-1">
-          Enter the student&apos;s ID, verify their identity, then cast their vote.
+        <h1 className="text-3xl sm:text-4xl font-bold text-[#041128] tracking-tight">
+          CAST A VOTE
+        </h1>
+        <p className="text-[#41516B] text-base mt-1.5">
+          Verify the student and record their project choice.
         </p>
       </div>
 
-      <div className="glass border border-white/10 rounded-2xl p-6 lg:p-8">
+      {/* ── Main Operations Card ── */}
+      <div className="bg-white rounded-[24px] border border-[rgba(4,17,40,0.08)] p-7 sm:p-10 shadow-[0_8px_30px_rgba(4,17,40,0.04)]">
         <AnimatePresence mode="wait">
-          {/* ── SEARCH STAGE ── */}
+          {/* ── 1. SEARCH STAGE ── */}
           {stage === 'search' && (
             <motion.div
               key="search"
@@ -69,20 +75,19 @@ export default function AdminVotePage() {
                 setLoading={setSearchLoading}
               />
 
-              {/* Search error */}
               {searchError && (
                 <motion.div
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 rounded-xl bg-red-500/5 border border-red-500/20"
+                  className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium"
                 >
-                  <p className="text-red-400 text-sm font-medium">{searchError}</p>
+                  {searchError}
                 </motion.div>
               )}
             </motion.div>
           )}
 
-          {/* ── DETAILS + VOTE STAGE ── */}
+          {/* ── 2. DETAILS & CAST VOTE STAGE ── */}
           {stage === 'details' && result && (
             <motion.div
               key="details"
@@ -95,14 +100,16 @@ export default function AdminVotePage() {
               <StudentDetails student={result.student} hasVoted={result.hasVoted} />
 
               {!result.hasVoted && (
-                <VoteForm student={result.student} onSuccess={handleVoteSuccess} />
+                <VoteForm
+                  student={result.student}
+                  onSuccess={handleVoteSuccess}
+                />
               )}
 
-              {/* If already voted — just show back button */}
               {result.hasVoted && (
                 <button
                   onClick={handleNextStudent}
-                  className="w-full py-3.5 rounded-xl border border-white/10 text-[#848C9B] hover:text-white hover:border-white/20 text-sm font-medium transition-all"
+                  className="w-full py-3.5 rounded-xl border border-[rgba(4,17,40,0.15)] text-[#041128] hover:bg-[#FAF9F5] text-sm font-semibold transition-all cursor-pointer"
                 >
                   Search Another Student
                 </button>
@@ -110,7 +117,7 @@ export default function AdminVotePage() {
             </motion.div>
           )}
 
-          {/* ── SUCCESS STAGE ── */}
+          {/* ── 3. SUCCESS STAGE ── */}
           {stage === 'success' && result && (
             <motion.div
               key="success"
@@ -121,6 +128,7 @@ export default function AdminVotePage() {
             >
               <VoteSuccess
                 studentName={result.student.name}
+                projectName={recordedProject}
                 onNextStudent={handleNextStudent}
               />
             </motion.div>
@@ -128,17 +136,17 @@ export default function AdminVotePage() {
         </AnimatePresence>
       </div>
 
-      {/* Stage indicator */}
-      <div className="flex items-center justify-center gap-2 mt-6">
+      {/* Progress Dots */}
+      <div className="flex items-center justify-center gap-2.5 mt-6">
         {(['search', 'details', 'success'] as Stage[]).map((s, i) => (
           <div
             key={s}
-            className={`h-1 rounded-full transition-all duration-300 ${
+            className={`h-1.5 rounded-full transition-all duration-300 ${
               stage === s
-                ? 'w-6 bg-[#91A9C9]'
+                ? 'w-8 bg-[#041128]'
                 : i < (['search', 'details', 'success'] as Stage[]).indexOf(stage)
-                ? 'w-4 bg-[#91A9C9]/40'
-                : 'w-4 bg-white/10'
+                ? 'w-4 bg-[#91A9C9]'
+                : 'w-4 bg-[rgba(4,17,40,0.1)]'
             }`}
           />
         ))}

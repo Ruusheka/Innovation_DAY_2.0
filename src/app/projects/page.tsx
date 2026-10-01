@@ -7,7 +7,7 @@ import type { Department, Project } from '@/types';
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Projects — BUILD CLUB SSN I FOUND',
+  title: 'All Projects — BUILD CLUB SSN I FOUND',
   description: 'Browse all student projects at the SSN I FOUND project exhibition.',
 };
 
@@ -38,28 +38,33 @@ export default async function ProjectsPage() {
   }));
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-[#FAF9F5]">
       <Navbar />
-      <main className="flex-1 pt-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Page header */}
-          <div className="mb-12" id="departments">
-            <p className="text-[#91A9C9] text-xs font-medium tracking-[0.2em] uppercase mb-3">
-              SSN I FOUND
-            </p>
-            <h1 className="text-white text-4xl sm:text-5xl font-bold">
+
+      <main className="flex-1 pt-[110px] sm:pt-[130px] pb-24">
+        <div className="max-w-[1360px] mx-auto px-5 sm:px-8 lg:px-12">
+          {/* Page Header */}
+          <div className="mb-12">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-4 h-[1.5px] bg-[#91A9C9]" />
+              <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#91A9C9]">
+                EXHIBITION DIRECTORY
+              </span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-semibold text-[#041128] tracking-tight">
               All Projects
             </h1>
-            <p className="text-[#848C9B] mt-3 max-w-xl">
-              {rawProjects.length} project{rawProjects.length !== 1 ? 's' : ''} across {departments.length} departments.
-              Filter by department to explore.
+            <p className="mt-3 text-[#41516B] text-base max-w-xl">
+              Explore {rawProjects.length} innovative student project{rawProjects.length !== 1 ? 's' : ''} developed across {departments.length} engineering departments.
             </p>
           </div>
 
+          {/* Grid + Filter */}
           <ProjectGrid projects={normalised} departments={departments} />
         </div>
       </main>
+
       <Footer />
-    </>
+    </div>
   );
 }

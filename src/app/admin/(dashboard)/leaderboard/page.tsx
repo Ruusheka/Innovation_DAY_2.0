@@ -13,7 +13,7 @@ export default async function AdminLeaderboardPage() {
   if (!canViewLeaderboard(session.admin.role)) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-red-400">You do not have permission to view the leaderboard.</p>
+        <p className="text-red-600 font-medium">You do not have permission to view the leaderboard.</p>
       </div>
     );
   }
@@ -34,9 +34,11 @@ export default async function AdminLeaderboardPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-white text-2xl font-bold">Live Leaderboard</h1>
-        <p className="text-[#848C9B] text-sm mt-1">
-          Real-time vote counts. Updates automatically as votes are recorded.
+        <h1 className="text-3xl sm:text-4xl font-bold text-[#041128] tracking-tight">
+          LIVE LEADERBOARD
+        </h1>
+        <p className="text-[#41516B] text-base mt-1.5">
+          Real-time vote counts across projects. Updates automatically as votes are recorded.
         </p>
       </div>
 

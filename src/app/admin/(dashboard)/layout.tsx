@@ -28,11 +28,11 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#040411]">
+    <div className="min-h-screen bg-[#FAF9F5] text-[#041128]">
       <AdminSidebar />
-      <div className="lg:pl-56 flex flex-col min-h-screen">
+      <div className="lg:pl-64 flex flex-col min-h-screen">
         <AdminHeader admin={admin} eventSettings={eventSettings} />
-        <main className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
+        <main className="flex-1 p-5 lg:p-10 pb-24 lg:pb-10 max-w-[1360px] w-full mx-auto">
           {children}
         </main>
       </div>
