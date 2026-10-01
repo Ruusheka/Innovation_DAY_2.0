@@ -6,9 +6,8 @@ import { z } from 'zod';
 export const voteSchema = z.object({
   studentId: z
     .string()
-    .min(1, 'Please enter a Student ID.')
-    .max(50, 'Student ID is too long.')
-    .trim(),
+    .trim()
+    .regex(/^\d{6}$/, 'Student ID must be exactly 6 digits.'),
   studentName: z
     .string()
     .min(1, 'Please enter the student\'s name.')

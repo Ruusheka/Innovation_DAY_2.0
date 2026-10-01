@@ -67,6 +67,10 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       toast.error('Please enter a Student ID.');
       return;
     }
+    if (!/^\d{6}$/.test(cleanId)) {
+      toast.error('Student ID must be exactly 6 digits.');
+      return;
+    }
 
     setCheckingId(true);
     setCheckMessage('');
@@ -119,6 +123,10 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
     e.preventDefault();
     if (!studentId.trim()) {
       toast.error('Please enter a Student ID.');
+      return;
+    }
+    if (!/^\d{6}$/.test(studentId.trim())) {
+      toast.error('Student ID must be exactly 6 digits.');
       return;
     }
     if (!idChecked || alreadyVoted) {
@@ -220,16 +228,19 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
             <input
               ref={studentIdInputRef}
               type="text"
+              inputMode="numeric"
+              maxLength={6}
               value={studentId}
               onChange={(e) => {
-                setStudentId(e.target.value);
+                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                setStudentId(val);
                 if (idChecked) {
                   setIdChecked(false);
                   setAlreadyVoted(false);
                   setCheckMessage('');
                 }
               }}
-              placeholder="Enter Student Roll No / ID (e.g. 3122245001127)"
+              placeholder="Enter 6-digit Student ID (e.g. 123456)"
               disabled={checkingId || submitting}
               className="w-full input-clean font-mono text-base font-semibold"
             />

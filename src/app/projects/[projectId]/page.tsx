@@ -54,7 +54,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     <div className="min-h-screen flex flex-col bg-[#FAF9F5]">
       <Navbar />
 
-      <main className="flex-1 py-10 sm:py-14">
+      <main className="flex-1 pt-[115px] sm:pt-[125px] pb-14">
         <PageContainer>
           {/* Back link */}
           <Link

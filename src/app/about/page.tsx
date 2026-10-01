@@ -14,7 +14,7 @@ export default function AboutPage() {
     <div className="min-h-screen flex flex-col bg-[#FAF9F5]">
       <Navbar />
 
-      <main className="flex-1 py-12 sm:py-20">
+      <main className="flex-1 pt-[115px] sm:pt-[125px] pb-20">
         <PageContainer>
           {/* Hero Header */}
           <div className="max-w-3xl mb-16 sm:mb-20">

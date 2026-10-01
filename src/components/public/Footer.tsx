@@ -31,18 +31,23 @@ export function Footer() {
               </div>
               <ul className="space-y-2.5 text-sm font-sans text-[#B2B4AB]">
                 <li>
+                  <Link href="/#hero" className="hover:text-white transition-colors">
+                    Home
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#about" className="hover:text-white transition-colors">
+                    About Exhibition
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#projects" className="hover:text-white transition-colors">
+                    Department Showcase
+                  </Link>
+                </li>
+                <li>
                   <Link href="/projects" className="hover:text-white transition-colors">
                     All Projects
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/departments" className="hover:text-white transition-colors">
-                    Departments
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="hover:text-white transition-colors">
-                    About Exhibition
                   </Link>
                 </li>
               </ul>

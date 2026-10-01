@@ -42,7 +42,7 @@ export default async function ProjectsPage() {
     <div className="min-h-screen flex flex-col bg-[#FAF9F5]">
       <Navbar />
 
-      <main className="flex-1 py-12 sm:py-16">
+      <main className="flex-1 pt-[115px] sm:pt-[125px] pb-16">
         <PageContainer>
           {/* Page Hero Header with Stats */}
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12 sm:mb-16 pb-8 border-b border-[rgba(4,17,40,0.06)]">

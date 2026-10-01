@@ -24,7 +24,7 @@ export function HeroSection() {
   };
 
   const scrollToExplore = () => {
-    const el = document.getElementById('departments');
+    const el = document.getElementById('projects');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
@@ -32,7 +32,8 @@ export function HeroSection() {
 
   return (
     <section
-      className="relative pt-8 sm:pt-12 md:pt-14 pb-14 sm:pb-20 overflow-hidden bg-[#FAF9F5]"
+      id="hero"
+      className="relative pt-[115px] sm:pt-[128px] md:pt-[138px] pb-14 sm:pb-20 overflow-hidden bg-[#FAF9F5]"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -123,16 +124,20 @@ export function HeroSection() {
               className="mt-8 sm:mt-10 flex flex-wrap items-center gap-5 sm:gap-6"
             >
               {/* Primary Pill Button */}
-              <Link
-                href="/projects"
-                className="group btn-navy-pill w-[240px] sm:w-[250px] !h-[58px]"
+              <a
+                href="#projects"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="group btn-navy-pill w-[240px] sm:w-[250px] !h-[58px] cursor-pointer"
               >
                 <span>Explore Projects</span>
                 <ArrowRight
                   size={18}
                   className="transition-transform duration-250 ease-out group-hover:translate-x-1.5"
                 />
-              </Link>
+              </a>
 
               {/* Secondary Circular Scroll-To-Explore */}
               <button

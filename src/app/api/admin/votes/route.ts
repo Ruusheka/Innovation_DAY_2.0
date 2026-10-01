@@ -90,7 +90,9 @@ export async function POST(request: NextRequest) {
 
     // ── 5. Insert vote into votes table ───────────────────────
     // Database UNIQUE(student_id) constraint guarantees concurrency protection
-    const { data: newVote, error: insertError } = await supabase
+    let newVote: { id: string; student_id?: string; created_at: string } | null = null;
+
+    const { data: directVote, error: insertError } = await supabase
       .from('votes')
       .insert({
         student_id: studentId.trim(),
@@ -117,11 +119,93 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      console.error('[votes/insert] Database error:', insertError);
-      return NextResponse.json(
-        { error: 'Unable to record the vote. Please try again.' },
-        { status: 500 }
-      );
+      // If database is still running initial UUID schema (migration 002 not yet applied)
+      if (
+        insertError.code === '22P02' ||
+        insertError.code === 'PGRST204' ||
+        insertError.message?.includes('uuid') ||
+        insertError.message?.includes('column')
+      ) {
+        // Fallback for UUID schema:
+        // A. Find or register student in students table
+        let studentRecord: { id: string } | null = null;
+
+        const { data: existingStudent } = await supabase
+          .from('students')
+          .select('id')
+          .eq('student_id', studentId.trim())
+          .maybeSingle();
+
+        if (existingStudent) {
+          studentRecord = existingStudent;
+        } else {
+          const { data: createdStudent, error: createStudentErr } = await supabase
+            .from('students')
+            .insert({
+              student_id: studentId.trim(),
+              name: studentName.trim(),
+            })
+            .select('id')
+            .single();
+
+          if (createStudentErr) {
+            if (createStudentErr.code === '23505') {
+              const { data: refetched } = await supabase
+                .from('students')
+                .select('id')
+                .eq('student_id', studentId.trim())
+                .single();
+              studentRecord = refetched;
+            } else {
+              console.error('[votes/fallback] Failed to create student:', createStudentErr.message);
+              return NextResponse.json({ error: 'Unable to record student data.' }, { status: 500 });
+            }
+          } else {
+            studentRecord = createdStudent;
+          }
+        }
+
+        if (!studentRecord) {
+          return NextResponse.json({ error: 'Unable to process student record.' }, { status: 500 });
+        }
+
+        // B. Insert into votes using student UUID
+        const { data: fbVote, error: fbVoteErr } = await supabase
+          .from('votes')
+          .insert({
+            student_id: studentRecord.id,
+            project_id: projectUuid,
+            voted_by: session.admin.id,
+            id_card_verified: true,
+          })
+          .select('id, created_at')
+          .single();
+
+        if (fbVoteErr) {
+          if (fbVoteErr.code === '23505') {
+            return NextResponse.json(
+              {
+                success: false,
+                code: 'ALREADY_VOTED',
+                error: 'This Student ID has already voted.',
+              },
+              { status: 409 }
+            );
+          }
+          console.error('[votes/fallback] Error inserting vote:', fbVoteErr.message);
+          return NextResponse.json({ error: 'Unable to record the vote. Please try again.' }, { status: 500 });
+        }
+
+        newVote = fbVote;
+      } else {
+        console.error('[votes/insert] Database error:', insertError);
+        return NextResponse.json(
+          { error: 'Unable to record the vote. Please try again.' },
+          { status: 500 }
+        );
+      }
+    } else {
+      newVote = directVote;
     }
 
     // ── 6. Log audit record (safe) ───────────────────────────

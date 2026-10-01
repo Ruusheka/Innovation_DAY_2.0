@@ -297,6 +297,58 @@ body {
   animation: softPulse 8s ease-in-out infinite;
 }
 
+/* ============================================================
+   INFINITE HORIZONTAL MARQUEE TRACKS
+   Alternating Left-to-Right and Right-to-Left tracks.
+   Pauses when parent track or card is hovered.
+   GPU-accelerated with translate3d.
+   ============================================================ */
+@keyframes marqueeLtr {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marqueeRtl {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-marquee-ltr {
+  display: flex;
+  width: max-content;
+  animation: marqueeLtr 42s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-rtl {
+  display: flex;
+  width: max-content;
+  animation: marqueeRtl 42s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-ltr:hover,
+.animate-marquee-rtl:hover {
+  animation-play-state: paused;
+}
+
+/* Floating Glass Pill Navbar */
+.glass-pill-nav {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 10px 32px -4px rgba(4, 17, 40, 0.08), 0 4px 12px -2px rgba(4, 17, 40, 0.04);
+}
+
 /* Accessibility: Respect Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -308,7 +360,9 @@ body {
     scroll-behavior: auto !important;
   }
   .animate-gentle-float,
-  .animate-soft-pulse {
+  .animate-soft-pulse,
+  .animate-marquee-ltr,
+  .animate-marquee-rtl {
     animation: none !important;
   }
 }
