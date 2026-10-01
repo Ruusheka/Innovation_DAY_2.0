@@ -403,7 +403,7 @@ function DepartmentWaveSection({
       ) : (
         /* Case 4+: 4+ Projects — Continuous Infinite Scroll + Dynamic Travelling Sine-Wave Marquee */
         <div
-          className="group/track relative w-full overflow-hidden pt-2 pb-48 lg:pb-56 touch-pan-y cursor-grab active:cursor-grabbing"
+          className="group/track relative w-full overflow-hidden pt-2 pb-48 lg:pb-56 touch-none cursor-grab active:cursor-grabbing"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
