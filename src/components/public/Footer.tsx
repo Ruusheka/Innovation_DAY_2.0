@@ -1,59 +1,61 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { PageContainer } from '@/components/ui/PageContainer';
 
 export function Footer() {
   return (
-    <footer className="bg-[#041128] text-white py-16 border-t border-[#041128] mt-auto">
-      <div className="max-w-[1360px] mx-auto px-5 sm:px-8 lg:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-12 pb-12 border-b border-white/10">
+    <footer className="bg-[#041128] text-white py-14 sm:py-16 border-t border-[#041128] mt-auto">
+      <PageContainer>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-12 pb-10 border-b border-white/10">
           {/* Col 1: Brand & Logo */}
           <div className="md:col-span-5 flex flex-col items-start">
-            <div className="relative h-12 w-48 mb-4">
+            <div className="relative h-11 w-44 mb-3.5">
               <Image
                 src="/logo.png"
-                alt="BUILD CLUB Logo"
+                alt="BUILD CLUB — SSN I FOUND"
                 fill
                 className="object-contain object-left brightness-0 invert"
+                sizes="176px"
               />
             </div>
-            <p className="text-sm text-[#848C9B] max-w-sm leading-relaxed">
-              Empowering SSN students to turn innovative ideas into working technology solutions.
+            <p className="font-sans text-sm text-[#848C9B] max-w-sm leading-relaxed">
+              Empowering SSN engineering students to transform bold ideas into working prototypes and real-world technology solutions.
             </p>
           </div>
 
-          {/* Col 2: Navigation */}
+          {/* Col 2: Navigation Links */}
           <div className="md:col-span-4 grid grid-cols-2 gap-6">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-[#91A9C9] mb-4">
+              <div className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8] mb-3.5">
                 Exhibition
               </div>
-              <ul className="space-y-2.5 text-sm text-[#B2B4AB]">
+              <ul className="space-y-2.5 text-sm font-sans text-[#B2B4AB]">
                 <li>
                   <Link href="/projects" className="hover:text-white transition-colors">
                     All Projects
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#departments" className="hover:text-white transition-colors">
+                  <Link href="/departments" className="hover:text-white transition-colors">
                     Departments
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#about" className="hover:text-white transition-colors">
-                    About Event
+                  <Link href="/about" className="hover:text-white transition-colors">
+                    About Exhibition
                   </Link>
                 </li>
               </ul>
             </div>
 
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-[#91A9C9] mb-4">
-                Operations
+              <div className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8] mb-3.5">
+                Desk Portal
               </div>
-              <ul className="space-y-2.5 text-sm text-[#B2B4AB]">
+              <ul className="space-y-2.5 text-sm font-sans text-[#B2B4AB]">
                 <li>
                   <Link href="/admin/login" className="hover:text-white transition-colors">
-                    Admin Portal
+                    Admin Login
                   </Link>
                 </li>
                 <li>
@@ -65,23 +67,23 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Col 3: College Info */}
+          {/* Col 3: Institutional Information */}
           <div className="md:col-span-3">
-            <div className="text-xs font-semibold uppercase tracking-wider text-[#91A9C9] mb-4">
+            <div className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8] mb-3.5">
               Institution
             </div>
-            <p className="text-sm text-[#B2B4AB] leading-relaxed">
+            <p className="font-sans text-sm text-[#B2B4AB] leading-relaxed">
               SSN College of Engineering
               <br />
               Rajiv Gandhi Salai (OMR)
               <br />
-              Kalavakkam, Tamil Nadu
+              Kalavakkam, Tamil Nadu 603110
             </p>
           </div>
         </div>
 
-        {/* Bottom row */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#848C9B]">
+        {/* Bottom Bar */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-sans text-[#848C9B]">
           <div>
             © {new Date().getFullYear()} BUILD CLUB — SSN I FOUND. All rights reserved.
           </div>
@@ -91,7 +93,7 @@ export function Footer() {
             <span>One Student = One Vote</span>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </footer>
   );
 }

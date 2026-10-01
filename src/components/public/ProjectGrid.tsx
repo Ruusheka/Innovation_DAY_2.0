@@ -20,11 +20,14 @@ export function ProjectGrid({ projects, departments }: ProjectGridProps) {
   const filtered = useMemo(() => {
     return projects.filter((p) => {
       const matchDept = !activeDeptId || p.department_id === activeDeptId;
+      const q = search.trim().toLowerCase();
       const matchSearch =
-        !search.trim() ||
-        p.title.toLowerCase().includes(search.toLowerCase()) ||
-        p.project_id.toLowerCase().includes(search.toLowerCase()) ||
-        p.project_lead.toLowerCase().includes(search.toLowerCase());
+        !q ||
+        p.title.toLowerCase().includes(q) ||
+        p.project_id.toLowerCase().includes(q) ||
+        p.project_lead.toLowerCase().includes(q) ||
+        (p.department?.name && p.department.name.toLowerCase().includes(q)) ||
+        (p.department?.code && p.department.code.toLowerCase().includes(q));
       return matchDept && matchSearch;
     });
   }, [projects, activeDeptId, search]);
@@ -33,8 +36,8 @@ export function ProjectGrid({ projects, departments }: ProjectGridProps) {
 
   return (
     <div className="w-full">
-      {/* ── DEPARTMENT SELECTION SECTION ── */}
-      <div id="departments" className="mb-10">
+      {/* ── 1. DEPARTMENT FILTER ROW ── */}
+      <div id="departments" className="mb-8 sm:mb-10">
         <DepartmentTabs
           departments={departments}
           activeId={activeDeptId}
@@ -42,28 +45,28 @@ export function ProjectGrid({ projects, departments }: ProjectGridProps) {
         />
       </div>
 
-      {/* ── SEARCH & COUNT BAR ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pt-4">
-        <div className="text-sm font-medium text-[#41516B]">
-          Showing <span className="text-[#041128] font-semibold">{filtered.length}</span> project
+      {/* ── 2. SEARCH & COUNT BAR ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pt-2">
+        <div className="text-[14.5px] font-sans font-medium text-[#41516B]">
+          Showing <span className="text-[#041128] font-bold">{filtered.length}</span> project
           {filtered.length !== 1 ? 's' : ''}
           {activeDeptObj ? ` in ${activeDeptObj.name}` : ' across all departments'}
         </div>
 
-        {/* Search bar */}
-        <div className="relative w-full sm:w-72">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#848C9B]" />
+        {/* Search input with clean rounded styling */}
+        <div className="relative w-full sm:w-80">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#848C9B]" />
           <input
             type="text"
             placeholder="Search projects or leads..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-full bg-white border border-[rgba(4,17,40,0.12)] text-[#041128] placeholder-[#848C9B] focus:outline-none focus:border-[#041128] transition-colors"
+            className="w-full pl-10 pr-4 py-2.5 text-sm font-sans rounded-full bg-white border border-[#D9E1EA] text-[#041128] placeholder-[#848C9B] focus:outline-none focus:border-[#041128] focus:ring-2 focus:ring-[#5277A8]/10 transition-all shadow-sm"
           />
         </div>
       </div>
 
-      {/* ── PROJECTS GRID ── */}
+      {/* ── 3. 3-COLUMN PROJECTS GRID ── */}
       <AnimatePresence mode="wait">
         {filtered.length === 0 ? (
           <motion.div
@@ -71,11 +74,13 @@ export function ProjectGrid({ projects, departments }: ProjectGridProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="py-20 text-center rounded-[20px] bg-white border border-[rgba(4,17,40,0.06)]"
+            className="py-16 sm:py-20 text-center rounded-[20px] bg-white border border-[#DDE5EE]"
           >
-            <p className="text-[#041128] font-semibold text-lg">No projects found</p>
-            <p className="text-[#848C9B] text-sm mt-1">
-              {search ? 'Try adjusting your search keywords.' : 'No projects are registered under this department yet.'}
+            <p className="font-display text-2xl text-[#041128]">No Projects Found</p>
+            <p className="text-[#848C9B] font-sans text-sm mt-2 max-w-sm mx-auto">
+              {search
+                ? 'No projects match your search criteria. Try using different keywords.'
+                : 'No active projects are registered under this department yet.'}
             </p>
           </motion.div>
         ) : (

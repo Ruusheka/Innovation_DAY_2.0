@@ -1,218 +1,314 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #FAF9F5;
-  --color-surface: #FFFFFF;
-  --color-surface-subtle: #F3F1EB;
-  --color-primary-dark: #041128;
-  --color-primary: #91A9C9;
-  --color-accent-blue: #41516B;
-  --color-muted-grey: #848C9B;
-  --color-warm-grey: #B2B4AB;
-  --color-border: rgba(4, 17, 40, 0.08);
-  --color-border-hover: rgba(145, 169, 201, 0.4);
-  --font-family-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-family-mono: var(--font-geist-mono), 'Fira Code', monospace;
+  --color-primary-navy: #041128;
+  --color-deep-black: #040411;
+  --color-soft-blue: #91A9C9;
+  --color-muted-blue: #848C9B;
+  --color-warm-gray: #B2B4AB;
+  --color-supporting-blue: #5277A8;
+  --color-bg-cream: #FAF9F5;
+  --color-surface-white: #FFFFFF;
+  --color-border: #D9E1EA;
+  --color-soft-blue-bg: #EDF4FC;
+
+  --font-sans: var(--font-manrope), sans-serif;
+  --font-display: var(--font-dm-serif), Georgia, serif;
 }
 
 /* ============================================================
    BUILD CLUB — SSN I FOUND
-   Global CSS variables and base styles (Light Editorial Theme)
+   Global Design System Tokens & Base Styles
    ============================================================ */
 
 :root {
-  /* Brand colors */
-  --bg-main: #FAF9F5;
-  --surface-white: #FFFFFF;
-  --surface-subtle: #F5F3ED;
   --navy-dark: #041128;
-  --navy-muted: #1E2B45;
+  --black-deep: #040411;
   --blue-soft: #91A9C9;
-  --blue-medium: #41516B;
-  --blue-tint: #EBF1F8;
-  --grey-muted: #848C9B;
-  --grey-warm: #B2B4AB;
-  --border-light: rgba(4, 17, 40, 0.08);
-  --border-medium: rgba(4, 17, 40, 0.15);
+  --blue-muted: #848C9B;
+  --gray-warm: #B2B4AB;
+  --blue-support: #5277A8;
+  --bg-cream: #FAF9F5;
+  --white: #FFFFFF;
+  --border-light: #D9E1EA;
+  --border-card: #DDE5EE;
+  --bg-soft-blue: #EDF4FC;
+
+  /* Restrained Functional Colors */
+  --color-success: #16a34a;
+  --color-error: #dc2626;
+  --color-warning: #d97706;
 
   /* Shadows */
   --shadow-subtle: 0 4px 20px rgba(4, 17, 40, 0.04);
-  --shadow-card: 0 10px 30px rgba(4, 17, 40, 0.06);
-  --shadow-hover: 0 16px 40px rgba(4, 17, 40, 0.10);
-  --shadow-floating: 0 20px 50px rgba(4, 17, 40, 0.12);
-
-  /* Functional */
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-error: #dc2626;
+  --shadow-card: 0 10px 30px rgba(4, 17, 40, 0.05);
+  --shadow-hover: 0 16px 36px rgba(4, 17, 40, 0.09);
+  --shadow-floating: 0 20px 48px rgba(4, 17, 40, 0.10);
 }
 
-/* Base */
-* {
-  box-sizing: border-box;
+/* Base Reset & Zero Overflow */
+html,
+body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
-  background-color: var(--bg-main);
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  background-color: var(--bg-main);
+  overflow-x: hidden;
+  background-color: var(--bg-cream);
   color: var(--navy-dark);
-  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-manrope), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  min-height: 100dvh;
 }
 
-/* Selection */
-::selection {
-  background: rgba(145, 169, 201, 0.35);
+/* Typography Utility Classes */
+.font-display {
+  font-family: var(--font-dm-serif), Georgia, serif;
+  font-weight: 400;
+}
+
+.font-sans {
+  font-family: var(--font-manrope), sans-serif;
+}
+
+/* ============================================================
+   GLOBAL PAGE CONTAINER
+   Max width: 1440px
+   Padding: desktop 48px, 2xl 56px, tablet 32px, mobile 20px
+   Shared by Navbar, Hero, Departments, Featured, Grid, Footer
+   ============================================================ */
+.page-container {
+  width: 100%;
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+@media (min-width: 640px) {
+  .page-container {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-container {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .page-container {
+    padding-left: 56px;
+    padding-right: 56px;
+  }
+}
+
+/* ============================================================
+   GLOBAL BUTTON SYSTEM
+   ============================================================ */
+
+/* Primary Navy Button (Pill) */
+.btn-navy-pill {
+  background-color: var(--navy-dark);
+  color: #FFFFFF;
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  height: 56px;
+  padding: 0 32px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(4, 17, 40, 0.12);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.btn-navy-pill:hover:not(:disabled) {
+  background-color: #0b1e42;
+  box-shadow: 0 8px 24px rgba(4, 17, 40, 0.18);
+  transform: translateY(-2px);
+}
+
+.btn-navy-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Secondary Button (Pill) */
+.btn-secondary-pill {
+  background-color: #FFFFFF;
   color: var(--navy-dark);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-main);
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(4, 17, 40, 0.15);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(4, 17, 40, 0.25);
-}
-
-/* Focus ring */
-:focus-visible {
-  outline: 2px solid var(--blue-soft);
-  outline-offset: 2px;
-  border-radius: 6px;
-}
-
-/* White Card Style */
-.card-white {
-  background: #FFFFFF;
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 9999px;
   border: 1px solid var(--border-light);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-secondary-pill:hover:not(:disabled) {
+  background-color: var(--bg-soft-blue);
+  border-color: var(--blue-soft);
+  transform: translateY(-2px);
+}
+
+/* Outlined Pill for Admin Login */
+.btn-outline-pill {
+  background-color: #FFFFFF;
+  color: var(--navy-dark);
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 9999px;
+  border: 1px solid #C5D0DF;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(4, 17, 40, 0.04);
+}
+
+.btn-outline-pill:hover {
+  background-color: var(--bg-soft-blue);
+  border-color: var(--blue-soft);
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   GLOBAL CARD & GLASS DESIGN
+   ============================================================ */
+
+/* Exhibition White Card */
+.card-white {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-card);
+  border-radius: 20px;
   box-shadow: var(--shadow-card);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .card-white:hover {
-  border-color: var(--border-medium);
+  border-color: var(--blue-soft);
   box-shadow: var(--shadow-hover);
   transform: translateY(-3px);
 }
 
-/* Glassmorphic Floating Card (White tint) */
+/* Floating Glassmorphism Card (Hero Overlay) */
 .glass-floating {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
   box-shadow: var(--shadow-floating);
 }
 
-/* Navbar glass */
-.nav-glass {
-  background: rgba(250, 249, 245, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-light);
+/* Sticky Navbar Glass Surface */
+.nav-surface {
+  background-color: rgba(250, 249, 245, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(4, 17, 40, 0.06);
 }
 
-/* Input styles */
+/* Input Styles */
 .input-clean {
-  background: #FFFFFF;
-  border: 1px solid var(--border-medium);
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
   color: var(--navy-dark);
+  font-family: var(--font-manrope), sans-serif;
   border-radius: 12px;
   padding: 0.875rem 1.125rem;
   width: 100%;
   font-size: 0.95rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
 .input-clean:focus {
   outline: none;
   border-color: var(--navy-dark);
   box-shadow: 0 0 0 3px rgba(4, 17, 40, 0.08);
 }
+
 .input-clean::placeholder {
-  color: var(--grey-muted);
+  color: var(--blue-muted);
 }
 
-/* Primary Navy Button (Pill) */
-.btn-navy-pill {
-  background: var(--navy-dark);
-  color: #FFFFFF;
-  font-weight: 500;
-  height: 56px;
-  padding: 0 2rem;
-  border-radius: 28px;
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 16px rgba(4, 17, 40, 0.15);
-}
-.btn-navy-pill:hover:not(:disabled) {
-  background: #112244;
-  box-shadow: 0 8px 24px rgba(4, 17, 40, 0.22);
-  transform: translateY(-2px);
-}
-.btn-navy-pill:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+/* ============================================================
+   SUBTLE FLOATING & PARALLAX ANIMATIONS
+   ============================================================ */
+@keyframes gentleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
-/* Clean Button Standard */
-.btn-navy {
-  background: var(--navy-dark);
-  color: #FFFFFF;
-  font-weight: 500;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-}
-.btn-navy:hover:not(:disabled) {
-  background: #112244;
-  transform: translateY(-1px);
-}
-.btn-navy:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+@keyframes softPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.45;
+  }
 }
 
-/* Outlined White Button */
-.btn-outline {
-  background: #FFFFFF;
-  color: var(--navy-dark);
-  border: 1px solid var(--border-medium);
-  font-weight: 500;
-  padding: 0.625rem 1.25rem;
-  border-radius: 24px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
+.animate-gentle-float {
+  animation: gentleFloat 6s ease-in-out infinite;
 }
-.btn-outline:hover:not(:disabled) {
-  background: var(--blue-tint);
-  border-color: var(--blue-soft);
+
+.animate-soft-pulse {
+  animation: softPulse 8s ease-in-out infinite;
+}
+
+/* Accessibility: Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-gentle-float,
+  .animate-soft-pulse {
+    animation: none !important;
+  }
 }

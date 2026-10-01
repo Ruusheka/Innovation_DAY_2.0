@@ -3,6 +3,7 @@ import { Footer } from '@/components/public/Footer';
 import { HeroSection } from '@/components/public/HeroSection';
 import { FeaturedSection } from '@/components/public/FeaturedSection';
 import { ProjectGrid } from '@/components/public/ProjectGrid';
+import { PageContainer } from '@/components/ui/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
@@ -38,7 +39,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9F5]">
-      {/* ── 1. NAVBAR ── */}
+      {/* ── 1. GLOBAL NAVBAR ── */}
       <Navbar />
 
       <main className="flex-1">
@@ -47,58 +48,59 @@ export default async function HomePage() {
 
         {/* ── 3. EXPLORE BY DEPARTMENT SECTION ── */}
         <section id="departments" className="py-16 sm:py-20 bg-[#FAF9F5] border-t border-[rgba(4,17,40,0.06)]">
-          <div className="max-w-[1360px] mx-auto px-5 sm:px-8 lg:px-12">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+          <PageContainer>
+            {/* Header: Eyebrow + DM Serif Heading + View All link */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-4 h-[1.5px] bg-[#91A9C9]" />
-                  <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#91A9C9]">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <div className="w-5 h-[1.5px] bg-[#5277A8]" />
+                  <span className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8]">
                     EXPLORE BY DEPARTMENT
                   </span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-semibold text-[#041128] tracking-tight leading-tight">
+                <h2 className="font-display font-normal text-3xl sm:text-4xl lg:text-[42px] text-[#041128] tracking-tight leading-tight m-0">
                   Discover Projects Across Departments
                 </h2>
               </div>
 
               <Link
                 href="/projects"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#041128] hover:text-[#41516B] transition-colors shrink-0"
+                className="inline-flex items-center gap-1.5 text-sm font-sans font-semibold text-[#041128] hover:text-[#5277A8] transition-colors shrink-0"
               >
                 <span>View All Projects</span>
                 <ArrowRight size={15} />
               </Link>
             </div>
 
-            {/* Department tabs & Project gallery */}
+            {/* Department selector + Project gallery */}
             <ProjectGrid projects={normalised} departments={departments} />
-          </div>
+          </PageContainer>
         </section>
 
         {/* ── 4. FEATURED PROJECTS CAROUSEL SECTION ── */}
         <FeaturedSection projects={normalised} />
 
         {/* ── 5. ABOUT SSN BUILD CLUB SECTION ── */}
-        <section id="about" className="py-20 bg-[#FAF9F5] border-t border-[rgba(4,17,40,0.06)]">
-          <div className="max-w-[1360px] mx-auto px-5 sm:px-8 lg:px-12">
-            <div className="rounded-[24px] bg-white border border-[rgba(4,17,40,0.08)] p-8 sm:p-12 lg:p-16 shadow-[0_10px_30px_rgba(4,17,40,0.04)] grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <section id="about" className="py-20 sm:py-24 bg-[#FAF9F5] border-t border-[rgba(4,17,40,0.06)]">
+          <PageContainer>
+            <div className="rounded-[24px] bg-white border border-[#DDE5EE] p-8 sm:p-12 lg:p-16 shadow-[0_10px_30px_rgba(4,17,40,0.04)] grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
               <div className="lg:col-span-7">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-4 h-[1.5px] bg-[#91A9C9]" />
-                  <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#91A9C9]">
+                  <div className="w-5 h-[1.5px] bg-[#5277A8]" />
+                  <span className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8]">
                     ABOUT THE EXHIBITION
                   </span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-semibold text-[#041128] tracking-tight leading-snug">
+                <h2 className="font-display font-normal text-3xl sm:text-4xl lg:text-[40px] text-[#041128] tracking-tight leading-snug m-0">
                   Where Engineering Ideas Become Tangible Prototypes.
                 </h2>
-                <p className="mt-4 text-[#41516B] text-base sm:text-lg leading-relaxed">
-                  BUILD CLUB at SSN College of Engineering fosters hands-on innovation, interdisciplinary collaboration, and real-world problem-solving across departments.
+                <p className="mt-4 font-sans text-[#3D5574] text-base sm:text-lg leading-relaxed">
+                  BUILD CLUB at SSN College of Engineering fosters hands-on innovation, cross-departmental collaboration, and real-world problem-solving across engineering disciplines.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
                   <Link
                     href="/projects"
-                    className="btn-navy-pill text-sm"
+                    className="btn-navy-pill !h-[50px] !text-sm"
                   >
                     <span>Browse All Projects</span>
                     <ArrowRight size={16} />
@@ -108,30 +110,30 @@ export default async function HomePage() {
 
               <div className="lg:col-span-5 grid grid-cols-2 gap-4">
                 {[
-                  { number: '6+', label: 'Departments' },
-                  { number: '30+', label: 'Active Projects' },
+                  { number: '5', label: 'Departments' },
+                  { number: `${normalised.length > 0 ? normalised.length : '30'}+`, label: 'Exhibition Projects' },
                   { number: '100+', label: 'Student Innovators' },
                   { number: '1', label: 'Shared Vision' },
                 ].map((stat, i) => (
                   <div
                     key={i}
-                    className="p-5 rounded-2xl bg-[#FAF9F5] border border-[rgba(4,17,40,0.06)] text-center"
+                    className="p-5 sm:p-6 rounded-2xl bg-[#FAF9F5] border border-[rgba(4,17,40,0.06)] text-center"
                   >
-                    <div className="text-3xl sm:text-4xl font-bold text-[#041128] tracking-tight">
+                    <div className="font-display text-3xl sm:text-4xl font-normal text-[#041128] tracking-tight">
                       {stat.number}
                     </div>
-                    <div className="text-xs font-medium text-[#848C9B] mt-1 uppercase tracking-wider">
+                    <div className="text-[11px] font-sans font-semibold text-[#848C9B] mt-1 uppercase tracking-wider">
                       {stat.label}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
+          </PageContainer>
         </section>
       </main>
 
-      {/* ── 6. FOOTER ── */}
+      {/* ── 6. GLOBAL FOOTER ── */}
       <Footer />
     </div>
   );
