@@ -12,8 +12,8 @@ interface DepartmentMarqueeProps {
   departments: Department[];
 }
 
-// Preferred presentation order for standard exhibition galleries
-const PREFERRED_ORDER = ['CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'IT', 'MTECHCSE', 'M.TECH CSE'];
+// Preferred presentation order for all 9 exhibition departments
+const PREFERRED_ORDER = ['CSE', 'IT', 'MTECHCSE', 'M.TECH CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'BME'];
 
 // Deterministic image fallback: /img1.png, /img2.png, /img3.png
 function getProjectThumbnail(project: Project & { department?: Department }) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { Cpu, Radio, Zap, Cog, Building2, Layers } from 'lucide-react';
+import { Cpu, Radio, Zap, Cog, Building2, Layers, Monitor, GraduationCap, FlaskConical, HeartPulse } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import type { Department } from '@/types';
 
@@ -10,14 +10,16 @@ interface DepartmentTabsProps {
   onChange: (id: string | null) => void;
 }
 
-// Exactly 5 valid engineering departments
-const VALID_DEPT_CODES = ['CSE', 'ECE', 'EEE', 'MECH', 'CIVIL'];
-
 function getDeptIcon(code: string) {
-  const upper = code.toUpperCase();
+  const upper = code.toUpperCase().replace(/[\s.]/g, '');
   switch (upper) {
     case 'CSE':
       return Cpu;
+    case 'IT':
+      return Monitor;
+    case 'MTECHCSE':
+    case 'MTECH':
+      return GraduationCap;
     case 'ECE':
       return Radio;
     case 'EEE':
@@ -26,25 +28,28 @@ function getDeptIcon(code: string) {
       return Cog;
     case 'CIVIL':
       return Building2;
+    case 'CHEM':
+      return FlaskConical;
+    case 'BME':
+      return HeartPulse;
     default:
       return Layers;
   }
 }
 
 export function DepartmentTabs({ departments, activeId, onChange }: DepartmentTabsProps) {
-  // Filter out any invalid departments (e.g. IT if not wanted) and preserve clean order
-  const validDepartments = departments.filter((d) =>
-    VALID_DEPT_CODES.includes(d.code.toUpperCase())
+  // Show all active departments from DB — no hardcoded filter
+  const sortedDepartments = [...departments].sort((a, b) =>
+    a.code.localeCompare(b.code)
   );
 
   return (
     <div className="w-full">
-      {/* 
-        ONE ROW DESKTOP GRID:
-        1 "ALL" card + 5 Department cards = 6 columns (lg:grid-cols-6).
-        Equal width, equal height (70px), zero awkward wrapping.
+      {/*
+        Responsive grid: 2 cols on mobile, 3 on sm, 5 on md, up to 10 on xl
+        (1 "ALL" card + up to 9 department cards)
       */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-10 gap-3 sm:gap-4">
         {/* ALL Card */}
         <button
           onClick={() => onChange(null)}
@@ -71,8 +76,8 @@ export function DepartmentTabs({ departments, activeId, onChange }: DepartmentTa
           </div>
         </button>
 
-        {/* 5 Department Cards */}
-        {validDepartments.map((dept) => {
+        {/* All Department Cards from DB */}
+        {sortedDepartments.map((dept) => {
           const Icon = getDeptIcon(dept.code);
           const isActive = activeId === dept.id;
 

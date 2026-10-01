@@ -10,8 +10,6 @@ interface VoteFormProps {
   onSuccess: (studentName: string, projectName: string) => void;
 }
 
-const DEPARTMENTS_LIST = ['CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'IT'];
-
 export function VoteForm({ onSuccess }: VoteFormProps) {
   // Step 1: Student ID Check
   const [studentId, setStudentId] = useState('');
@@ -35,6 +33,9 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Departments fetched live from DB (includes MTech CSE and all 7 departments automatically)
+  const [dbDepartments, setDbDepartments] = useState<string[]>([]);
+
   const studentIdInputRef = useRef<HTMLInputElement>(null);
   const studentNameInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,15 +54,28 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       .finally(() => setLoadingProjects(false));
   }, []);
 
-  // Dynamically derive departments from projects + standard list
+  // Fetch departments from DB — so MTech CSE and any future department is always present
+  useEffect(() => {
+    fetch('/api/public/departments')
+      .then((r) => r.json())
+      .then((json) => {
+        const codes: string[] = (json.data ?? [])
+          .map((d: any) => (d.code || '').trim().toUpperCase())
+          .filter(Boolean);
+        setDbDepartments(codes);
+      })
+      .catch(() => {/* silently fall back to project-derived codes */});
+  }, []);
+
+  // Merge DB departments + any extra codes found in loaded projects — always complete, always sorted
   const availableDepts = Array.from(
     new Set([
-      ...DEPARTMENTS_LIST,
+      ...dbDepartments,
       ...allProjects
         .map((p: any) => (p.department?.code || p.departments?.code || '').trim().toUpperCase())
         .filter(Boolean),
     ])
-  );
+  ).sort();
 
   // Filter projects by selected project department
   const filteredProjects = allProjects.filter((p: any) => {

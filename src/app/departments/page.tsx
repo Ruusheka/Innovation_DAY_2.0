@@ -3,30 +3,38 @@ import { Footer } from '@/components/public/Footer';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { Cpu, Radio, Zap, Cog, Building2, Layers, ArrowRight } from 'lucide-react';
+import { Cpu, Radio, Zap, Cog, Building2, Layers, Monitor, GraduationCap, FlaskConical, HeartPulse, ArrowRight } from 'lucide-react';
 import type { Department, Project } from '@/types';
 
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Departments — BUILD CLUB SSN I FOUND',
-  description: 'Explore engineering departments participating in the SSN I FOUND project exhibition.',
+  title: 'Departments — BUILD CLUB SSN Innovation Day',
+  description: 'Explore all 9 engineering departments participating in the SSN Innovation Day project exhibition.',
 };
-
-const VALID_DEPT_CODES = ['CSE', 'ECE', 'EEE', 'MECH', 'CIVIL'];
 
 const DEPT_DESCRIPTIONS: Record<string, string> = {
   CSE: 'Computer Science & Engineering projects focusing on artificial intelligence, systems, web technologies, and computational algorithms.',
+  IT: 'Information Technology projects covering full-stack development, cloud computing, data management, and enterprise software solutions.',
+  MTECHCSE: 'M.Tech Computer Science & Engineering postgraduate projects exploring advanced research in AI, machine learning, and systems design.',
   ECE: 'Electronics & Communication Engineering projects exploring embedded systems, IoT architectures, signal processing, and communication protocols.',
   EEE: 'Electrical & Electronics Engineering projects showcasing smart power systems, electric vehicles, renewable energy, and power automation.',
   MECH: 'Mechanical Engineering projects highlighting robotics, CAD/CAM design, autonomous vehicles, and advanced manufacturing prototypes.',
   CIVIL: 'Civil Engineering projects focusing on smart infrastructure, structural modeling, sustainable materials, and environmental engineering.',
+  CHEM: 'Chemical Engineering projects covering process optimization, green chemistry, material synthesis, and industrial chemical systems.',
+  BME: 'Biomedical Engineering projects bridging medicine and technology — from biosensors and medical devices to health monitoring systems.',
 };
 
 function getDeptIcon(code: string) {
-  switch (code.toUpperCase()) {
+  const upper = code.toUpperCase().replace(/[\s.]/g, '');
+  switch (upper) {
     case 'CSE':
       return Cpu;
+    case 'IT':
+      return Monitor;
+    case 'MTECHCSE':
+    case 'MTECH':
+      return GraduationCap;
     case 'ECE':
       return Radio;
     case 'EEE':
@@ -35,6 +43,10 @@ function getDeptIcon(code: string) {
       return Cog;
     case 'CIVIL':
       return Building2;
+    case 'CHEM':
+      return FlaskConical;
+    case 'BME':
+      return HeartPulse;
     default:
       return Layers;
   }
@@ -55,13 +67,9 @@ export default async function DepartmentsPage() {
       .eq('is_active', true),
   ]);
 
-  const rawDepts = (deptsRes.data ?? []) as Department[];
+  // Show all active departments from DB — no hardcoded filter
+  const departments = (deptsRes.data ?? []) as Department[];
   const projects = (projectsRes.data ?? []) as Project[];
-
-  // Filter to the 5 valid departments
-  const departments = rawDepts.filter((d) =>
-    VALID_DEPT_CODES.includes(d.code.toUpperCase())
-  );
 
   // Calculate project count per department
   const counts: Record<string, number> = {};
@@ -89,7 +97,7 @@ export default async function DepartmentsPage() {
               Explore by Department
             </h1>
             <p className="mt-3.5 font-sans text-[#3D5574] text-base sm:text-lg leading-relaxed">
-              Discover engineering innovations developed by students across {departments.length} foundational engineering disciplines at SSN College of Engineering.
+              Discover engineering innovations developed by students across {departments.length} departments at SSN College of Engineering.
             </p>
           </div>
 
@@ -98,6 +106,7 @@ export default async function DepartmentsPage() {
             {departments.map((dept) => {
               const Icon = getDeptIcon(dept.code);
               const count = counts[dept.id] || 0;
+              const codeKey = dept.code.toUpperCase().replace(/[\s.]/g, '');
 
               return (
                 <Link
@@ -124,7 +133,7 @@ export default async function DepartmentsPage() {
 
                       {/* Description */}
                       <p className="mt-2.5 text-sm font-sans text-[#848C9B] leading-relaxed line-clamp-3">
-                        {DEPT_DESCRIPTIONS[dept.code] ||
+                        {DEPT_DESCRIPTIONS[codeKey] ||
                           `Innovative student projects and working engineering prototypes built by ${dept.name} students.`}
                       </p>
                     </div>
