@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getSession } from '@/lib/auth/getSession';
 import { canVote } from '@/lib/permissions';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 // ============================================================
 // GET /api/admin/votes/check?studentId=...
@@ -16,6 +17,14 @@ export async function GET(request: NextRequest) {
     }
     if (!canVote(session.admin.role)) {
       return NextResponse.json({ error: 'Forbidden: insufficient permissions' }, { status: 403 });
+    }
+
+    const limit = checkRateLimit(`check:${session.admin.id}`, 120, 60000);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please wait a moment.' },
+        { status: 429 }
+      );
     }
 
     const { searchParams } = new URL(request.url);

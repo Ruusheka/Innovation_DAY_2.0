@@ -26,6 +26,8 @@ export function canViewLeaderboard(role: AdminRole): boolean {
   return hasRole(role, 'VIEWER');
 }
 
+export const VOTING_CONTROLLER_EMAIL = 'ruushekas@gmail.com';
+
 export function canManageAdmins(role: AdminRole): boolean {
   return hasRole(role, 'SUPER_ADMIN');
 }
@@ -34,8 +36,10 @@ export function canImportStudents(role: AdminRole): boolean {
   return hasRole(role, 'SUPER_ADMIN');
 }
 
-export function canToggleVoting(role: AdminRole): boolean {
-  return hasRole(role, 'SUPER_ADMIN');
+export function canToggleVoting(role: AdminRole, email?: string | null): boolean {
+  if (!isSuperAdmin(role)) return false;
+  if (!email) return false;
+  return email.trim().toLowerCase() === VOTING_CONTROLLER_EMAIL.toLowerCase();
 }
 
 export function canCorrectVotes(role: AdminRole): boolean {

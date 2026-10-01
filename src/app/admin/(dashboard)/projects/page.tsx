@@ -26,12 +26,12 @@ export default async function AdminProjectsPage() {
     .order('code');
 
   return (
-    <div>
+    <div className="font-primary">
       <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-[#041128] tracking-tight">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-normal text-[#041128] tracking-tight">
           PROJECTS
         </h1>
-        <p className="text-[#41516B] text-base mt-1.5">
+        <p className="text-[#5277A8] text-sm sm:text-base mt-1.5 font-normal">
           Manage exhibition projects across departments. Add, edit, or deactivate projects.
         </p>
       </div>

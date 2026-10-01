@@ -53,12 +53,22 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       .finally(() => setLoadingProjects(false));
   }, []);
 
+  // Dynamically derive departments from projects + standard list
+  const availableDepts = Array.from(
+    new Set([
+      ...DEPARTMENTS_LIST,
+      ...allProjects
+        .map((p: any) => (p.department?.code || p.departments?.code || '').trim().toUpperCase())
+        .filter(Boolean),
+    ])
+  );
+
   // Filter projects by selected project department
   const filteredProjects = allProjects.filter((p: any) => {
     if (!projectDepartment) return false;
     const target = projectDepartment.trim().toUpperCase();
-    const deptCode = (p.department?.code || p.departments?.code || '')?.toUpperCase();
-    const deptName = (p.department?.name || p.departments?.name || '')?.toUpperCase();
+    const deptCode = (p.department?.code || p.departments?.code || '')?.trim().toUpperCase();
+    const deptName = (p.department?.name || p.departments?.name || '')?.trim().toUpperCase();
     return deptCode === target || deptName === target || deptName.includes(target);
   });
 
@@ -209,19 +219,19 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
   const selectedProjectObj = allProjects.find((p) => p.id === selectedProjectId);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 font-primary">
       {/* ── STEP 1: STUDENT ID VERIFICATION ── */}
-      <div className="p-6 rounded-[20px] bg-white border border-[#D9E1EA] shadow-sm space-y-4">
+      <div className="p-7 rounded-[26px] bg-white/80 backdrop-blur-[20px] border border-white/85 shadow-[0_12px_40px_rgba(4,17,40,0.06)] space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-[#041128] text-white text-xs font-bold flex items-center justify-center font-sans">
+            <span className="w-6 h-6 rounded-full bg-[#041128] text-white text-xs font-normal flex items-center justify-center font-primary">
               1
             </span>
-            <h3 className="font-sans font-bold text-sm text-[#041128] uppercase tracking-wider">
+            <h3 className="font-primary text-sm text-[#041128] uppercase tracking-wider font-normal">
               Student ID Verification
             </h3>
           </div>
-          <span className="text-xs font-sans text-[#848C9B]">
+          <span className="text-xs font-primary text-[#5277A8]">
             Operator visually inspects college ID card
           </span>
         </div>
@@ -282,7 +292,7 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
           <div className="p-3.5 rounded-xl bg-green-50 border border-green-200 flex items-center justify-between text-green-800 animate-in fade-in duration-200">
             <div className="flex items-center gap-2.5">
               <CheckCircle2 size={18} className="text-green-600 shrink-0" />
-              <span className="text-xs font-sans font-semibold">
+              <span className="text-xs font-semibold">
                 Student ID available ✓ Ready to collect details
               </span>
             </div>
@@ -296,22 +306,22 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       {/* ── STEP 2: STUDENT INFORMATION (Unlocked when ID is available) ── */}
       <div
         className={cn(
-          'p-6 rounded-[20px] bg-white border border-[#D9E1EA] shadow-sm space-y-5 transition-opacity',
+          'p-7 rounded-[26px] bg-white/80 backdrop-blur-[20px] border border-white/85 shadow-[0_12px_40px_rgba(4,17,40,0.06)] space-y-5 transition-opacity',
           !idChecked || alreadyVoted ? 'opacity-40 pointer-events-none' : 'opacity-100'
         )}
       >
         <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-[#041128] text-white text-xs font-bold flex items-center justify-center font-sans">
+          <span className="w-6 h-6 rounded-full bg-[#041128] text-white text-xs font-normal flex items-center justify-center font-primary">
             2
           </span>
-          <h3 className="font-sans font-bold text-sm text-[#041128] uppercase tracking-wider">
+          <h3 className="font-primary text-sm text-[#041128] uppercase tracking-wider font-normal">
             Student Information
           </h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-sans font-semibold text-[#041128] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
               Student Full Name *
             </label>
             <input
@@ -321,22 +331,22 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
               onChange={(e) => setStudentName(e.target.value)}
               placeholder="e.g. John Doe"
               disabled={!idChecked || alreadyVoted || submitting}
-              className="input-clean text-sm font-sans"
+              className="input-clean text-sm font-primary"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-sans font-semibold text-[#041128] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
               Student Department *
             </label>
             <select
               value={studentDepartment}
               onChange={(e) => setStudentDepartment(e.target.value)}
               disabled={!idChecked || alreadyVoted || submitting}
-              className="input-clean text-sm font-sans"
+              className="input-clean text-sm font-primary"
             >
               <option value="">Select Department ▼</option>
-              {DEPARTMENTS_LIST.map((dept) => (
+              {availableDepts.map((dept) => (
                 <option key={dept} value={dept}>
                   {dept}
                 </option>
@@ -346,7 +356,7 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
         </div>
 
         {/* Physical ID Card Checkbox Confirmation */}
-        <div className="p-4 rounded-xl bg-[#FAF9F5] border border-[#D9E1EA]">
+        <div className="p-4 rounded-2xl bg-white/60 border border-[#D9E1EA]">
           <label className="flex items-start gap-3 cursor-pointer select-none">
             <div className="relative mt-0.5">
               <input
@@ -368,11 +378,11 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
               </div>
             </div>
             <div>
-              <div className="text-sm font-sans font-semibold text-[#041128] flex items-center gap-1.5">
+              <div className="text-sm font-primary font-normal text-[#041128] flex items-center gap-1.5">
                 <ShieldCheck size={15} className="text-[#5277A8]" />
                 Physical College ID Card Verified
               </div>
-              <div className="text-xs font-sans text-[#848C9B] mt-0.5">
+              <div className="text-xs font-primary text-[#848C9B] mt-0.5">
                 Admin operator confirms inspecting the student&apos;s physical ID card at the desk.
               </div>
             </div>
@@ -383,17 +393,17 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       {/* ── STEP 3: PROJECT SELECTION ── */}
       <div
         className={cn(
-          'p-6 rounded-[20px] bg-white border border-[#D9E1EA] shadow-sm space-y-5 transition-opacity',
+          'p-7 rounded-[26px] bg-white/80 backdrop-blur-[20px] border border-white/85 shadow-[0_12px_40px_rgba(4,17,40,0.06)] space-y-5 transition-opacity',
           !idChecked || alreadyVoted || !idCardVerified
             ? 'opacity-40 pointer-events-none'
             : 'opacity-100'
         )}
       >
         <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-[#041128] text-white text-xs font-bold flex items-center justify-center font-sans">
+          <span className="w-6 h-6 rounded-full bg-[#041128] text-white text-xs font-normal flex items-center justify-center font-primary">
             3
           </span>
-          <h3 className="font-sans font-bold text-sm text-[#041128] uppercase tracking-wider">
+          <h3 className="font-primary text-sm text-[#041128] uppercase tracking-wider font-normal">
             Select Project
           </h3>
         </div>
@@ -401,7 +411,7 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Project Department Selector */}
           <div>
-            <label className="block text-xs font-sans font-semibold text-[#041128] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
               Project Department *
             </label>
             <select
@@ -411,10 +421,10 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
                 setSelectedProjectId('');
               }}
               disabled={!idChecked || alreadyVoted || !idCardVerified || submitting}
-              className="input-clean text-sm font-sans"
+              className="input-clean text-sm font-primary"
             >
               <option value="">Select Project Department ▼</option>
-              {DEPARTMENTS_LIST.map((dept) => (
+              {availableDepts.map((dept) => (
                 <option key={dept} value={dept}>
                   {dept}
                 </option>
@@ -424,14 +434,14 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
 
           {/* Project Selector (Filtered) */}
           <div>
-            <label className="block text-xs font-sans font-semibold text-[#041128] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
               Project *
             </label>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
               disabled={!projectDepartment || loadingProjects || submitting}
-              className="input-clean text-sm font-sans"
+              className="input-clean text-sm font-primary"
             >
               <option value="">
                 {loadingProjects
@@ -492,19 +502,19 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
 
       {/* ── STEP 4: CONFIRMATION MODAL ── */}
       {showConfirmModal && (
-        <div className="fixed inset-0 z-50 bg-[#041128]/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-[24px] max-w-md w-full p-6 sm:p-8 shadow-2xl border border-[#D9E1EA] animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="font-display font-normal text-2xl sm:text-3xl text-[#041128] m-0">
+        <div className="fixed inset-0 z-50 bg-[#041128]/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white/95 backdrop-blur-[24px] rounded-[26px] max-w-md w-full p-6 sm:p-8 shadow-[0_24px_60px_rgba(4,17,40,0.18)] border border-white/90 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="font-primary font-normal text-2xl sm:text-3xl text-[#041128] m-0">
               CONFIRM VOTE
             </h3>
-            <p className="font-sans text-xs text-[#848C9B] mt-1.5 mb-6">
+            <p className="text-xs text-[#848C9B] mt-1.5 mb-6">
               Please review student identity and project choice before final submission:
             </p>
 
-            <div className="space-y-3.5 bg-[#FAF9F5] p-5 rounded-2xl border border-[#D9E1EA] text-sm font-sans mb-6">
+            <div className="space-y-3.5 bg-[#FAF9F5] p-5 rounded-2xl border border-[#D9E1EA] text-sm mb-6">
               <div className="flex justify-between items-center">
                 <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold">Student ID:</span>
-                <span className="font-mono font-bold text-[#041128] text-base">{studentId.trim()}</span>
+                <span className="font-bold text-[#041128] text-base">{studentId.trim()}</span>
               </div>
 
               <div className="flex justify-between items-center">

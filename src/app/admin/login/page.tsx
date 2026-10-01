@@ -64,14 +64,14 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F5] flex flex-col justify-between p-6">
+    <div className="min-h-screen flex flex-col justify-between p-6 relative font-primary">
       {/* Top back navigation */}
       <div className="max-w-[1200px] w-full mx-auto">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm font-medium text-[#41516B] hover:text-[#041128] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-[#D9E1EA] text-xs font-normal text-[#41516B] hover:text-[#041128] hover:bg-[rgba(145,169,201,0.18)] transition-all shadow-2xs"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={14} />
           <span>Back to Exhibition</span>
         </Link>
       </div>
@@ -82,7 +82,7 @@ export default function AdminLoginPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: 'easeOut' }}
-          className="bg-white rounded-[24px] border border-[rgba(4,17,40,0.08)] p-8 sm:p-10 shadow-[0_12px_40px_rgba(4,17,40,0.06)]"
+          className="bg-white/80 backdrop-blur-[20px] rounded-[28px] border border-white/85 p-8 sm:p-10 shadow-[0_15px_45px_rgba(4,17,40,0.08)]"
         >
           {/* Logo & Header */}
           <div className="text-center mb-8">
@@ -95,10 +95,10 @@ export default function AdminLoginPage() {
                 priority
               />
             </div>
-            <h1 className="text-2xl font-semibold text-[#041128] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-normal text-[#041128] tracking-tight">
               Admin Portal
             </h1>
-            <p className="text-sm text-[#848C9B] mt-1">
+            <p className="text-xs sm:text-sm text-[#5277A8] mt-1 font-normal">
               Sign in to manage votes, projects & leaderboard
             </p>
           </div>
@@ -169,7 +169,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full mt-2 h-12 rounded-xl bg-[#041128] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#112244] disabled:opacity-40 transition-all cursor-pointer shadow-md shadow-[#041128]/10"
+              className="btn-navy-pill !w-full !h-[50px] !text-sm cursor-pointer mt-3"
             >
               {loading ? (
                 <>

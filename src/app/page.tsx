@@ -37,7 +37,7 @@ export default async function HomePage() {
   }));
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF9F5] scroll-smooth">
+    <div className="min-h-screen flex flex-col bg-[#F8F7F3] scroll-smooth">
       {/* ── 1. FLOATING GLASS PILL NAVBAR ── */}
       <Navbar />
 
@@ -46,7 +46,7 @@ export default async function HomePage() {
         <HeroSection />
 
         {/* ── 3. ABOUT SECTION (#about) ── */}
-        <section id="about" className="py-20 sm:py-28 bg-[#FAF9F5] border-t border-[rgba(4,17,40,0.06)] relative overflow-hidden">
+        <section id="about" className="py-20 sm:py-28 bg-[#F8F7F3] border-t border-[rgba(4,17,40,0.06)] relative overflow-hidden">
           {/* Subtle background ambient blur */}
           <div className="pointer-events-none absolute -top-40 right-1/4 w-[450px] h-[450px] rounded-full bg-[#EDF4FC]/60 blur-3xl -z-10" />
 
@@ -55,14 +55,14 @@ export default async function HomePage() {
             <div className="max-w-3xl mb-12 sm:mb-16">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-5 h-[1.5px] bg-[#5277A8]" />
-                <span className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8]">
+                <span className="text-[11.5px] font-semibold uppercase tracking-[0.25em] text-[#5277A8]">
                   ABOUT BUILD CLUB &bull; SSN I FOUND
                 </span>
               </div>
-              <h2 className="font-display font-normal text-3xl sm:text-5xl lg:text-[54px] text-[#041128] tracking-tight leading-[1.08] m-0">
+              <h2 className="font-primary font-normal text-3xl sm:text-5xl lg:text-[54px] text-[#041128] tracking-tight leading-[1.08] m-0">
                 Building ideas. Engineering solutions. Creating impact.
               </h2>
-              <p className="mt-5 font-sans text-[#3D5574] text-base sm:text-lg leading-relaxed">
+              <p className="mt-5 text-[#3D5574] text-base sm:text-lg leading-relaxed">
                 The SSN I FOUND Project Exhibition is a student-driven innovation initiative hosted at SSN College of Engineering. We unite young engineers across all disciplines to solve tangible engineering challenges through hands-on fabrication and rapid prototyping.
               </p>
             </div>
@@ -72,8 +72,8 @@ export default async function HomePage() {
               {[
                 {
                   icon: Layers,
-                  title: '6 Disciplines',
-                  desc: 'Cross-functional engineering spanning CSE, ECE, EEE, MECH, CIVIL, and IT.',
+                  title: '7 Disciplines',
+                  desc: 'Cross-functional engineering spanning CSE, ECE, EEE, MECH, CIVIL, IT, and M.Tech CSE.',
                 },
                 {
                   icon: Sparkles,
@@ -95,15 +95,15 @@ export default async function HomePage() {
                 return (
                   <div
                     key={i}
-                    className="rounded-[22px] bg-white/80 backdrop-blur-md border border-[#D9E1EA] p-6 sm:p-7 shadow-[0_4px_20px_rgba(4,17,40,0.03)] hover:shadow-[0_12px_32px_rgba(4,17,40,0.08)] hover:border-[#91A9C9] transition-all duration-300 group"
+                    className="rounded-[26px] bg-white/80 backdrop-blur-[20px] border border-white/85 p-6 sm:p-7 shadow-[0_12px_40px_rgba(4,17,40,0.06)] hover:shadow-[0_16px_48px_rgba(4,17,40,0.1)] hover:border-[#91A9C9] transition-all duration-300 group"
                   >
                     <div className="w-12 h-12 rounded-2xl bg-[#EDF4FC] text-[#5277A8] flex items-center justify-center mb-5 group-hover:bg-[#041128] group-hover:text-white transition-colors duration-300">
                       <Icon size={22} />
                     </div>
-                    <h3 className="font-sans font-bold text-lg text-[#041128] mb-2">
+                    <h3 className="font-normal text-xl text-[#041128] mb-2">
                       {item.title}
                     </h3>
-                    <p className="font-sans text-xs sm:text-sm text-[#41516B] leading-relaxed">
+                    <p className="text-xs sm:text-sm text-[#41516B] leading-relaxed">
                       {item.desc}
                     </p>
                   </div>
@@ -114,35 +114,35 @@ export default async function HomePage() {
             {/* Exhibition Impact Banner */}
             <div className="rounded-[26px] bg-[#041128] text-white p-8 sm:p-12 lg:p-14 shadow-xl flex flex-col lg:flex-row items-center justify-between gap-8">
               <div className="max-w-xl text-center lg:text-left">
-                <span className="text-[11px] font-sans font-semibold uppercase tracking-[0.25em] text-[#91A9C9]">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#91A9C9]">
                   STUDENT PROJECT EXHIBITION
                 </span>
-                <h3 className="font-display font-normal text-2xl sm:text-4xl text-white tracking-tight mt-2">
+                <h3 className="font-primary font-normal text-2xl sm:text-4xl text-white tracking-tight mt-2">
                   Discover What SSN Students Are Creating.
                 </h3>
-                <p className="font-sans text-sm sm:text-base text-[#FAF9F5]/75 mt-3 leading-relaxed">
+                <p className="text-sm sm:text-base text-[#FAF9F5]/75 mt-3 leading-relaxed">
                   Browse live prototypes, research demonstrations, and engineering hardware built by the next generation of engineers.
                 </p>
               </div>
 
               <div className="grid grid-cols-3 gap-6 sm:gap-10 shrink-0 text-center">
                 <div>
-                  <div className="font-display text-3xl sm:text-4xl text-white">6</div>
-                  <div className="text-[11px] font-sans font-semibold text-[#91A9C9] uppercase tracking-wider mt-1">
+                  <div className="font-primary text-3xl sm:text-4xl text-white">7</div>
+                  <div className="text-[11px] font-semibold text-[#91A9C9] uppercase tracking-wider mt-1">
                     Departments
                   </div>
                 </div>
                 <div>
-                  <div className="font-display text-3xl sm:text-4xl text-white">
+                  <div className="font-primary text-3xl sm:text-4xl text-white">
                     {normalised.length > 0 ? `${normalised.length}+` : '30+'}
                   </div>
-                  <div className="text-[11px] font-sans font-semibold text-[#91A9C9] uppercase tracking-wider mt-1">
+                  <div className="text-[11px] font-semibold text-[#91A9C9] uppercase tracking-wider mt-1">
                     Projects
                   </div>
                 </div>
                 <div>
-                  <div className="font-display text-3xl sm:text-4xl text-white">100+</div>
-                  <div className="text-[11px] font-sans font-semibold text-[#91A9C9] uppercase tracking-wider mt-1">
+                  <div className="font-primary text-3xl sm:text-4xl text-white">100+</div>
+                  <div className="text-[11px] font-semibold text-[#91A9C9] uppercase tracking-wider mt-1">
                     Innovators
                   </div>
                 </div>
@@ -152,21 +152,21 @@ export default async function HomePage() {
         </section>
 
         {/* ── 4. PROJECTS SECTION (#projects) — DEPARTMENT BY DEPARTMENT MARQUEE ── */}
-        <section id="projects" className="py-20 sm:py-28 bg-[#FAF9F5] border-t border-[rgba(4,17,40,0.06)]">
+        <section id="projects" className="py-20 sm:py-28 bg-[#F8F7F3] border-t border-[rgba(4,17,40,0.06)]">
           <PageContainer>
             {/* Header: Eyebrow + DM Serif Heading */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 sm:mb-16 gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2.5">
                   <div className="w-5 h-[1.5px] bg-[#5277A8]" />
-                  <span className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8]">
+                  <span className="text-[11.5px] font-semibold uppercase tracking-[0.25em] text-[#5277A8]">
                     EXHIBITION SHOWCASE &bull; DEPARTMENT TRACKS
                   </span>
                 </div>
-                <h2 className="font-display font-normal text-3xl sm:text-4xl lg:text-[44px] text-[#041128] tracking-tight leading-tight m-0">
+                <h2 className="font-primary font-normal text-3xl sm:text-4xl lg:text-[44px] text-[#041128] tracking-tight leading-tight m-0">
                   Projects by Department
                 </h2>
-                <p className="mt-2 text-sm sm:text-base font-sans text-[#41516B] max-w-xl">
+                <p className="mt-2 text-sm sm:text-base text-[#41516B] max-w-xl">
                   Each engineering department features an infinite showcase track moving in alternating directions. Hover over any card to pause the track and explore details.
                 </p>
               </div>

@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getSession } from '@/lib/auth/getSession';
-import { canToggleVoting } from '@/lib/permissions';
+import { canToggleVoting, isSuperAdmin } from '@/lib/permissions';
 
 // ============================================================
 // PATCH /api/admin/settings
-// SUPER_ADMIN only — toggle voting on/off
+// SUPER_ADMIN role only — toggle voting on/off
+// Access gated by role (canToggleVoting) not by email.
 // ============================================================
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!canToggleVoting(session.admin.role)) {
-      return NextResponse.json({ error: 'Forbidden: SUPER_ADMIN role required' }, { status: 403 });
+
+    if (!canToggleVoting(session.admin.role, session.admin.email)) {
+      return NextResponse.json(
+        { error: 'Forbidden: Only the designated Superadmin (ruushekas@gmail.com) can open or close voting.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json().catch(() => null);
@@ -40,7 +45,7 @@ export async function PATCH(request: NextRequest) {
       admin_id: session.admin.id,
       action: body.voting_enabled ? 'VOTING_ENABLED' : 'VOTING_DISABLED',
       target_type: 'event_settings',
-      metadata: { voting_enabled: body.voting_enabled },
+      metadata: { voting_enabled: body.voting_enabled, modified_by: session.admin.email },
     });
 
     return NextResponse.json({ data });
@@ -69,7 +74,14 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to load settings' }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    return NextResponse.json({
+      data: {
+        ...data,
+        isSuperAdmin: isSuperAdmin(session.admin.role),
+        canToggleVoting: canToggleVoting(session.admin.role, session.admin.email),
+        adminEmail: session.admin.email,
+      },
+    });
   } catch (err) {
     console.error('[admin/settings GET] error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

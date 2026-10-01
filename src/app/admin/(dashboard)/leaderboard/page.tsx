@@ -12,38 +12,51 @@ export default async function AdminLeaderboardPage() {
   if (!session) redirect('/admin/login');
   if (!canViewLeaderboard(session.admin.role)) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-red-600 font-medium">You do not have permission to view the leaderboard.</p>
+      <div className="flex items-center justify-center h-64 font-primary">
+        <p className="text-red-600 font-normal">You do not have permission to view the leaderboard.</p>
       </div>
     );
   }
 
   const supabase = createServiceClient();
 
-  // Fetch leaderboard and departments in parallel
-  const [leaderboardRes, deptsRes, totalRes] = await Promise.all([
+  // Fetch leaderboard, departments, total votes, and project thumbnails in parallel
+  const [leaderboardRes, deptsRes, totalRes, projectsRes] = await Promise.all([
     supabase.from('leaderboard').select('*'),
     supabase.from('departments').select('*').eq('is_active', true).order('code'),
     supabase.from('votes').select('id', { count: 'exact', head: true }),
+    supabase.from('projects').select('id, project_id, image_url'),
   ]);
 
-  const leaderboardData = (leaderboardRes.data ?? []) as LeaderboardRow[];
+  const rawLeaderboard = (leaderboardRes.data ?? []) as LeaderboardRow[];
   const departments = (deptsRes.data ?? []) as Department[];
   const totalVotes = totalRes.count ?? 0;
+  const projectImages = new Map<string, string>();
+  (projectsRes.data ?? []).forEach((p: any) => {
+    if (p.image_url) {
+      projectImages.set(p.id, p.image_url);
+      projectImages.set(p.project_id, p.image_url);
+    }
+  });
+
+  const enrichedLeaderboard = rawLeaderboard.map((row) => ({
+    ...row,
+    image_url: projectImages.get(row.project_uuid) || projectImages.get(row.project_id) || undefined,
+  }));
 
   return (
-    <div>
+    <div className="font-primary">
       <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-[#041128] tracking-tight">
-          LIVE LEADERBOARD
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-normal text-[#041128] tracking-tight m-0">
+          PROJECT LEADERBOARD
         </h1>
-        <p className="text-[#41516B] text-base mt-1.5">
-          Real-time vote counts across projects. Updates automatically as votes are recorded.
+        <p className="text-[#5277A8] text-sm sm:text-base mt-2 font-normal">
+          Current voting standings
         </p>
       </div>
 
       <LeaderboardTable
-        initialData={leaderboardData}
+        initialData={enrichedLeaderboard}
         totalVotes={totalVotes}
         departments={departments}
       />

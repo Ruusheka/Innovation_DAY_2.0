@@ -1,17 +1,67 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, ArrowDown } from 'lucide-react';
 import { PageContainer } from '@/components/ui/PageContainer';
+import { cn } from '@/lib/utils/cn';
+
+// Cinematic Slideshow using exact files: /img1.png, /img2.png, /img3.png
+const HERO_SLIDES = [
+  {
+    id: 1,
+    src: '/img1.png',
+    alt: 'Build Club SSN — Engineering Prototyping & Innovation',
+    caption: 'Hardware Prototyping',
+    // Subtle composition parameters
+    imageTransform: 'rotate-[-2deg] translate-x-0 translate-y-0',
+    outlineTransform: 'rotate-[-2.5deg] translate-x-0 translate-y-0',
+  },
+  {
+    id: 2,
+    src: '/img2.png',
+    alt: 'Build Club SSN — Autonomous Systems & Circuit Design',
+    caption: 'Embedded Intelligence',
+    // Slide 2: image shifts slightly toward center
+    imageTransform: 'rotate-[1.8deg] -translate-x-3.5 translate-y-1',
+    outlineTransform: 'rotate-[2.2deg] -translate-x-2 translate-y-1.5',
+  },
+  {
+    id: 3,
+    src: '/img3.png',
+    alt: 'SSN College of Engineering Campus Building',
+    caption: 'SSN Innovation Center',
+    // Slide 3: image moves with slight vertical movement
+    imageTransform: 'rotate-[-1deg] translate-x-3 -translate-y-2',
+    outlineTransform: 'rotate-[-1.5deg] translate-x-3.5 -translate-y-2',
+  },
+];
 
 export function HeroSection() {
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [slideDirection, setSlideDirection] = useState<'right-to-left' | 'left-to-right'>('right-to-left');
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
 
+  // Automatic slideshow loop: 3.5s visible, 1.0s smooth transition, alternating direction
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlideIndex((prev) => {
+        const next = (prev + 1) % HERO_SLIDES.length;
+        // Alternating transition directions:
+        // Slide 0 -> 1: right to left
+        // Slide 1 -> 2: left to right
+        // Slide 2 -> 0: right to left
+        setSlideDirection(next % 2 === 1 ? 'right-to-left' : 'left-to-right');
+        return next;
+      });
+    }, 3500);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Subtle parallax calculation on desktop (limited to max 4px movement)
     const { currentTarget, clientX, clientY } = e;
     const rect = currentTarget.getBoundingClientRect();
     const x = ((clientX - rect.left) / rect.width - 0.5) * 6;
@@ -30,23 +80,25 @@ export function HeroSection() {
     }
   };
 
+  const currentSlide = HERO_SLIDES[slideIndex];
+
   return (
     <section
       id="hero"
-      className="relative pt-[115px] sm:pt-[128px] md:pt-[138px] pb-14 sm:pb-20 overflow-hidden bg-[#FAF9F5]"
+      className="relative pt-[115px] sm:pt-[128px] md:pt-[138px] pb-14 sm:pb-20 overflow-hidden bg-[#F8F7F3]"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       {/* Far Right Decorative Vertical Typography (Desktop Only - positioned safely within section) */}
       <div className="hidden 2xl:flex flex-col items-center absolute right-8 top-1/2 -translate-y-1/2 z-10 pointer-events-none select-none">
         <div className="w-6 h-[1.5px] bg-[#91A9C9]/50 mb-6" />
-        <div className="[writing-mode:vertical-lr] text-[11px] tracking-[0.35em] text-[#848C9B] uppercase font-sans font-medium space-y-4">
+        <div className="[writing-mode:vertical-lr] text-[11px] tracking-[0.35em] text-[#848C9B] uppercase font-medium space-y-4">
           <span>IDEAS</span>
-          <span className="text-[#5277A8]">•</span>
+          <span className="text-[#5277A8]">&bull;</span>
           <span>CODE</span>
-          <span className="text-[#5277A8]">•</span>
+          <span className="text-[#5277A8]">&bull;</span>
           <span>SOLUTIONS</span>
-          <span className="text-[#5277A8]">•</span>
+          <span className="text-[#5277A8]">&bull;</span>
           <span>TOMORROW</span>
         </div>
       </div>
@@ -55,8 +107,8 @@ export function HeroSection() {
         {/* Two-Column Master Grid: Left ~48-50%, Right ~50-52% */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center min-h-[500px] lg:min-h-[540px]">
           
-          {/* ── LEFT COLUMN (~48%) ── */}
-          <div className="lg:col-span-6 xl:col-span-6 flex flex-col justify-center z-10 min-w-0">
+          {/* ── LEFT COLUMN (~40%) ── */}
+          <div className="lg:col-span-5 xl:col-span-5 flex flex-col justify-center z-10 min-w-0">
             {/* 1. Small Editorial Eyebrow */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
@@ -65,7 +117,7 @@ export function HeroSection() {
               className="flex items-center gap-3 mb-4 sm:mb-5"
             >
               <div className="w-5 h-[1.5px] bg-[#5277A8] shrink-0" />
-              <span className="text-[11px] sm:text-[12.5px] tracking-[0.25em] text-[#5277A8] font-sans font-semibold uppercase">
+              <span className="text-[11px] sm:text-[12.5px] tracking-[0.25em] text-[#5277A8] font-semibold uppercase">
                 INNOVATION &nbsp;/&nbsp; COLLABORATION &nbsp;/&nbsp; IMPACT
               </span>
             </motion.div>
@@ -77,20 +129,20 @@ export function HeroSection() {
               transition={{ duration: 0.65, delay: 0.08, ease: 'easeOut' }}
             >
               <h1
-                className="font-display font-normal text-[#041128] tracking-[-0.025em] leading-[0.93] m-0"
+                className="font-primary font-normal text-[#041128] tracking-[-0.025em] leading-[0.93] m-0"
                 style={{ fontSize: 'clamp(56px, 5.8vw, 92px)' }}
               >
                 BUILD CLUB
               </h1>
               <div
-                className="font-display font-normal text-[#041128] tracking-[-0.025em] leading-[0.93] mt-1 sm:mt-2"
+                className="font-primary font-normal text-[#041128] tracking-[-0.025em] leading-[0.93] mt-1 sm:mt-2"
                 style={{ fontSize: 'clamp(56px, 5.8vw, 92px)' }}
               >
                 SSN I FOUND
               </div>
             </motion.div>
 
-            {/* 3. Hero Subtitle (Manrope) */}
+            {/* 3. Hero Subtitle */}
             <motion.div
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
@@ -98,7 +150,7 @@ export function HeroSection() {
               className="mt-3 sm:mt-4"
             >
               <h2
-                className="font-sans font-normal text-[#5277A8] tracking-[-0.02em] leading-tight m-0"
+                className="font-primary font-normal text-[#5277A8] tracking-[-0.02em] leading-tight m-0"
                 style={{ fontSize: 'clamp(26px, 3.2vw, 44px)' }}
               >
                 PROJECT EXHIBITION
@@ -110,7 +162,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.28, ease: 'easeOut' }}
-              className="mt-5 sm:mt-6 text-[16px] sm:text-[17px] leading-[1.62] text-[#3D5574] max-w-[480px] font-sans font-normal"
+              className="mt-5 sm:mt-6 text-[16px] sm:text-[17px] leading-[1.62] text-[#3D5574] max-w-[480px] font-normal"
             >
               Explore the innovative projects built by talented students at{' '}
               <span className="text-[#041128] font-semibold">SSN College of Engineering</span>.
@@ -142,7 +194,7 @@ export function HeroSection() {
               {/* Secondary Circular Scroll-To-Explore */}
               <button
                 onClick={scrollToExplore}
-                className="group inline-flex items-center gap-3 text-sm font-sans font-medium text-[#41516B] hover:text-[#041128] transition-colors cursor-pointer py-2"
+                className="group inline-flex items-center gap-3 text-sm font-medium text-[#41516B] hover:text-[#041128] transition-colors cursor-pointer py-2"
                 aria-label="Scroll down to explore projects by department"
               >
                 <div className="w-10 h-10 rounded-full border border-[rgba(4,17,40,0.18)] group-hover:border-[#5277A8] flex items-center justify-center transition-colors bg-white/70 shadow-sm">
@@ -158,60 +210,118 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* ── RIGHT COLUMN (~52%) — Layered Hero Composition ── */}
-          <div className="lg:col-span-6 xl:col-span-6 relative flex justify-center lg:justify-end mt-4 lg:mt-0">
-            <div className="relative w-full max-w-[490px] lg:max-w-[540px]">
+          {/* ── RIGHT COLUMN (~55-60%) — Cinematic Hero Slideshow Composition ── */}
+          <div className="lg:col-span-7 xl:col-span-7 relative flex justify-center lg:justify-end mt-6 lg:mt-0 w-full">
+            <div className="relative w-full max-w-[560px] sm:max-w-[620px] lg:max-w-[680px] xl:max-w-[720px]">
               
-              {/* 1. Behind: Soft blue circular shape (pulsing subtly) */}
+              {/* 1. Behind: Large Circular Pale-Blue Background Shape */}
               <div
-                className="absolute -top-10 -left-10 w-[340px] sm:w-[420px] h-[340px] sm:h-[420px] rounded-full bg-[#C9DCF5]/40 blur-3xl pointer-events-none animate-soft-pulse"
+                className="absolute -top-12 -left-10 sm:-top-16 sm:-left-14 w-[420px] sm:w-[520px] h-[420px] sm:h-[520px] rounded-full pointer-events-none animate-soft-pulse z-0 max-w-full overflow-hidden"
                 style={{
+                  background: 'radial-gradient(circle, rgba(145,169,201,0.45) 0%, rgba(197,216,238,0.35) 60%, rgba(248,247,243,0) 80%)',
+                  border: '1px solid rgba(145,169,201,0.30)',
                   transform: `translate(${mouseOffset.x * -0.6}px, ${mouseOffset.y * -0.6}px)`,
-                  transition: 'transform 0.2s ease-out',
+                  transition: 'transform 0.25s ease-out',
                 }}
               />
 
-              {/* 2. Behind: Thin geometric outline frame */}
+              {/* 2. Behind: Thin geometric outline frame shifting per slide */}
               <div
-                className="absolute -top-3.5 -right-3.5 w-full h-full rounded-[22px] border border-[#91A9C9]/50 pointer-events-none hidden sm:block"
+                className={cn(
+                  'absolute -top-3.5 -right-3.5 w-full h-full rounded-[28px] border border-[#91A9C9]/50 pointer-events-none hidden sm:block z-0 transition-transform duration-1000 ease-out',
+                  currentSlide.outlineTransform
+                )}
                 style={{
-                  transform: `rotate(-2deg) translate(${mouseOffset.x * 0.4}px, ${mouseOffset.y * 0.4}px)`,
-                  transition: 'transform 0.2s ease-out',
+                  transform: `translate(${mouseOffset.x * 0.4}px, ${mouseOffset.y * 0.4}px)`,
                 }}
               />
 
-              {/* 3. Main Showcase Building Image */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.96, y: 20, rotate: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0, rotate: -2 }}
-                transition={{ duration: 0.85, delay: 0.22, ease: 'easeOut' }}
-                className="relative z-10 w-full aspect-[4/3] rounded-[20px] overflow-hidden bg-white shadow-[0_16px_48px_rgba(4,17,40,0.11)] border border-[rgba(4,17,40,0.08)] group"
+              {/* 3. Main Showcase Slideshow Container */}
+              <div
+                className={cn(
+                  'relative z-10 w-full aspect-[4/3] rounded-[28px] overflow-hidden bg-white shadow-[0_24px_55px_rgba(4,17,40,0.12)] border border-[rgba(4,17,40,0.08)] transition-transform duration-1000 ease-out group',
+                  currentSlide.imageTransform
+                )}
                 style={{
-                  transform: `rotate(-2deg) translate(${mouseOffset.x}px, ${mouseOffset.y}px)`,
-                  transition: 'transform 0.15s ease-out',
+                  transform: `translate(${mouseOffset.x}px, ${mouseOffset.y}px)`,
                 }}
               >
-                {/* Floating motion wrapper */}
-                <div className="relative w-full h-full animate-gentle-float">
-                  <Image
-                    src="/ssn-building.png"
-                    alt="SSN College of Engineering Campus Building"
-                    fill
-                    priority
-                    sizes="(max-width: 768px) 100vw, 540px"
-                    className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                  />
-                  {/* Subtle editorial scrim gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#041128]/25 via-transparent to-transparent pointer-events-none" />
+                {/* Cross-slide smooth transition (1.0s duration with alternating direction) */}
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <motion.div
+                    key={currentSlide.id}
+                    initial={{
+                      opacity: 0,
+                      x: slideDirection === 'right-to-left' ? 75 : -75,
+                      scale: 0.94,
+                      rotate: slideDirection === 'right-to-left' ? 1.5 : -1.5,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      x: 0,
+                      scale: 1,
+                      rotate: 0,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      x: slideDirection === 'right-to-left' ? -65 : 65,
+                      scale: 1.05,
+                      rotate: slideDirection === 'right-to-left' ? -1.5 : 1.5,
+                    }}
+                    transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
+                    className="absolute inset-0 w-full h-full overflow-hidden"
+                  >
+                    {/* Subtle continuous micro-motion while displayed */}
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.025, 1],
+                        x: [0, 3, -3, 0],
+                      }}
+                      transition={{
+                        duration: 6,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                      className="relative w-full h-full"
+                    >
+                      <Image
+                        src={currentSlide.src}
+                        alt={currentSlide.alt}
+                        fill
+                        priority
+                        sizes="(max-width: 768px) 95vw, 680px"
+                        className="object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.03]"
+                      />
+                      {/* Subtle editorial scrim gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#041128]/35 via-transparent to-transparent pointer-events-none" />
+                    </motion.div>
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Slideshow Progress Indicators */}
+                <div className="absolute bottom-3 left-4 z-20 flex items-center gap-1.5 bg-[#041128]/60 backdrop-blur-md px-2.5 py-1 rounded-full">
+                  {HERO_SLIDES.map((slide, idx) => (
+                    <button
+                      key={slide.id}
+                      onClick={() => setSlideIndex(idx)}
+                      className={cn(
+                        'w-2 h-2 rounded-full transition-all duration-300 cursor-pointer',
+                        idx === slideIndex
+                          ? 'w-5 bg-white'
+                          : 'bg-white/40 hover:bg-white/70'
+                      )}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  ))}
                 </div>
-              </motion.div>
+              </div>
 
               {/* 4. Floating Glass Card (Restrained, Upper-Right of Image, Never Overlapping Navbar) */}
               <motion.div
                 initial={{ opacity: 0, y: 15, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.65, delay: 0.55, ease: 'easeOut' }}
-                className="absolute -top-5 -right-3 sm:-top-6 sm:-right-5 z-20 glass-floating rounded-[18px] p-4 sm:p-5 max-w-[215px] sm:max-w-[235px] shadow-xl pointer-events-auto"
+                className="absolute -top-5 -right-3 sm:-top-6 sm:-right-5 z-20 glass-floating rounded-[20px] p-4 sm:p-5 max-w-[215px] sm:max-w-[235px] shadow-xl pointer-events-auto"
                 style={{
                   transform: `translate(${mouseOffset.x * 1.2}px, ${mouseOffset.y * 1.2}px)`,
                   transition: 'transform 0.18s ease-out',
@@ -228,11 +338,11 @@ export function HeroSection() {
                     />
                   </div>
                   <div className="leading-tight">
-                    <div className="text-[#041128] font-sans font-bold text-xs tracking-wide">BUILD CLUB</div>
-                    <div className="text-[#5277A8] font-sans text-[10px] font-semibold tracking-wider">SSN I FOUND</div>
+                    <div className="text-[#041128] font-bold text-xs tracking-wide">BUILD CLUB</div>
+                    <div className="text-[#5277A8] text-[10px] font-semibold tracking-wider">SSN I FOUND</div>
                   </div>
                 </div>
-                <div className="text-[12px] font-sans font-medium text-[#41516B] leading-snug">
+                <div className="text-[12px] font-medium text-[#41516B] leading-snug">
                   Student Projects.
                   <br />
                   <span className="text-[#041128] font-bold">Real Impact.</span>

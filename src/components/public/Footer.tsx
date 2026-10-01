@@ -9,16 +9,16 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-12 pb-10 border-b border-white/10">
           {/* Col 1: Brand & Logo */}
           <div className="md:col-span-5 flex flex-col items-start">
-            <div className="relative h-11 w-44 mb-3.5">
+            <div className="relative h-12 w-48 mb-4">
               <Image
-                src="/logo.png"
+                src="/logo-white.png"
                 alt="BUILD CLUB — SSN I FOUND"
                 fill
-                className="object-contain object-left brightness-0 invert"
-                sizes="176px"
+                className="object-contain object-left"
+                sizes="192px"
               />
             </div>
-            <p className="font-sans text-sm text-[#848C9B] max-w-sm leading-relaxed">
+            <p className="text-sm text-[#848C9B] max-w-sm leading-relaxed">
               Empowering SSN engineering students to transform bold ideas into working prototypes and real-world technology solutions.
             </p>
           </div>
@@ -26,10 +26,10 @@ export function Footer() {
           {/* Col 2: Navigation Links */}
           <div className="md:col-span-4 grid grid-cols-2 gap-6">
             <div>
-              <div className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8] mb-3.5">
+              <div className="text-[11.5px] font-semibold uppercase tracking-[0.25em] text-[#5277A8] mb-3.5">
                 Exhibition
               </div>
-              <ul className="space-y-2.5 text-sm font-sans text-[#B2B4AB]">
+              <ul className="space-y-2.5 text-sm text-[#B2B4AB]">
                 <li>
                   <Link href="/#hero" className="hover:text-white transition-colors">
                     Home
@@ -54,18 +54,22 @@ export function Footer() {
             </div>
 
             <div>
-              <div className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8] mb-3.5">
-                Desk Portal
+              <div className="text-[11.5px] font-semibold uppercase tracking-[0.25em] text-[#5277A8] mb-3.5">
+                Desk Operations
               </div>
-              <ul className="space-y-2.5 text-sm font-sans text-[#B2B4AB]">
-                <li>
-                  <Link href="/admin/login" className="hover:text-white transition-colors">
-                    Admin Login
-                  </Link>
-                </li>
+              <ul className="space-y-2.5 text-sm text-[#B2B4AB]">
                 <li>
                   <Link href="/admin/vote" className="hover:text-white transition-colors">
                     Registration Desk
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/admin/login"
+                    className="inline-flex items-center gap-1.5 text-xs text-[#848C9B] hover:text-[#91A9C9] transition-colors mt-1"
+                  >
+                    <span>Admin Access</span>
+                    <span>&rarr;</span>
                   </Link>
                 </li>
               </ul>
@@ -74,10 +78,10 @@ export function Footer() {
 
           {/* Col 3: Institutional Information */}
           <div className="md:col-span-3">
-            <div className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8] mb-3.5">
+            <div className="text-[11.5px] font-semibold uppercase tracking-[0.25em] text-[#5277A8] mb-3.5">
               Institution
             </div>
-            <p className="font-sans text-sm text-[#B2B4AB] leading-relaxed">
+            <p className="text-sm text-[#B2B4AB] leading-relaxed">
               SSN College of Engineering
               <br />
               Rajiv Gandhi Salai (OMR)
@@ -88,13 +92,13 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-sans text-[#848C9B]">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#848C9B]">
           <div>
-            © {new Date().getFullYear()} BUILD CLUB — SSN I FOUND. All rights reserved.
+            &copy; {new Date().getFullYear()} BUILD CLUB &mdash; SSN I FOUND. All rights reserved.
           </div>
           <div className="flex items-center gap-6">
             <span>SSN Project Exhibition</span>
-            <span>•</span>
+            <span>&bull;</span>
             <span>One Student = One Vote</span>
           </div>
         </div>

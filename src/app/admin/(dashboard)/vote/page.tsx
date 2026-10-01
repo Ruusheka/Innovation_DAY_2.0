@@ -17,13 +17,13 @@ export default function AdminVotePage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-4 sm:py-8">
+    <div className="max-w-3xl mx-auto py-4 sm:py-8 font-primary">
       {/* ── Page Header ── */}
       <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-display font-normal text-[#041128] tracking-tight m-0">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-normal text-[#041128] tracking-tight m-0">
           CAST A VOTE
         </h1>
-        <p className="font-sans text-[#41516B] text-base mt-2">
+        <p className="text-sm sm:text-base text-[#5277A8] mt-2 font-normal">
           Verify the student&apos;s physical college ID card and record their project choice.
         </p>
       </div>

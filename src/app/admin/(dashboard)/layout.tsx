@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { getAdminUser } from '@/lib/auth/getAdminUser';
 import { AdminSidebar, AdminMobileNav } from '@/components/admin/AdminSidebar';
 import { AdminHeader } from '@/components/admin/AdminHeader';
+import { isSuperAdmin } from '@/lib/permissions';
 import type { EventSettings } from '@/types';
 
 export default async function AdminLayout({
@@ -21,14 +22,14 @@ export default async function AdminLayout({
 
   // Fetch event settings for SUPER_ADMIN controls
   let eventSettings: EventSettings | null = null;
-  if (admin.role === 'SUPER_ADMIN') {
+  if (isSuperAdmin(admin.role)) {
     const svc = createServiceClient();
     const { data } = await svc.from('event_settings').select('*').single();
     eventSettings = data as EventSettings | null;
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F5] text-[#041128]">
+    <div className="min-h-screen bg-[#F8F7F3] text-[#041128]">
       <AdminSidebar />
       <div className="lg:pl-64 flex flex-col min-h-screen">
         <AdminHeader admin={admin} eventSettings={eventSettings} />

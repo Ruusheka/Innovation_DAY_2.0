@@ -145,7 +145,7 @@ export function ProjectTable({ departments }: ProjectTableProps) {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-[22px] border border-[#D9E1EA] overflow-hidden shadow-sm">
+      <div className="bg-white/80 backdrop-blur-[20px] rounded-[26px] border border-white/85 overflow-hidden shadow-[0_12px_40px_rgba(4,17,40,0.06)]">
         {loading ? (
           <div className="py-20 flex items-center justify-center gap-3 text-[#848C9B]">
             <Loader2 size={20} className="animate-spin text-[#041128]" />
@@ -157,9 +157,9 @@ export function ProjectTable({ departments }: ProjectTableProps) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left font-sans">
+            <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-[#D9E1EA] bg-[#FAF9F5] text-xs uppercase tracking-wider text-[#848C9B]">
+                <tr className="border-b border-[#D9E1EA] bg-[#FAF9F5]/70 text-xs uppercase tracking-wider text-[#848C9B]">
                   <th className="px-6 py-4 font-semibold">Project ID</th>
                   <th className="px-5 py-4 font-semibold">Title</th>
                   <th className="px-5 py-4 font-semibold">Department</th>
@@ -172,10 +172,10 @@ export function ProjectTable({ departments }: ProjectTableProps) {
                 {filtered.map((project) => (
                   <tr
                     key={project.id}
-                    className="hover:bg-[#FAF9F5] transition-colors"
+                    className="hover:bg-[#FAF9F5]/60 transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <span className="font-mono font-bold text-xs text-[#041128] px-2.5 py-1 rounded bg-[#EDF4FC]">
+                      <span className="font-bold text-xs text-[#041128] px-2.5 py-1 rounded-full bg-[#EDF4FC]">
                         {project.project_id}
                       </span>
                     </td>
@@ -425,10 +425,10 @@ function ProjectFormModal({ project, departments, onClose, onSaved }: ProjectFor
         initial={{ opacity: 0, scale: 0.96, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 10 }}
-        className="relative bg-white rounded-[24px] border border-[#D9E1EA] p-7 sm:p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="relative bg-white/95 backdrop-blur-[24px] rounded-[26px] border border-white/90 p-7 sm:p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-[0_24px_60px_rgba(4,17,40,0.18)]"
       >
         <div className="flex items-center justify-between mb-6 pb-3 border-b border-[rgba(4,17,40,0.06)]">
-          <h2 className="font-display font-normal text-2xl text-[#041128]">
+          <h2 className="font-primary font-normal text-2xl text-[#041128]">
             {project ? 'Edit Exhibition Project' : 'Add Exhibition Project'}
           </h2>
           <button onClick={onClose} className="text-[#848C9B] hover:text-[#041128] p-1 cursor-pointer">
@@ -436,7 +436,7 @@ function ProjectFormModal({ project, departments, onClose, onSaved }: ProjectFor
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 font-sans">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-[#041128] uppercase tracking-wider mb-1.5">
@@ -651,9 +651,9 @@ function ConfirmDialog({
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
-        className="relative bg-white rounded-[24px] border border-[#D9E1EA] p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 font-sans"
+        className="relative bg-white/95 backdrop-blur-[24px] rounded-[26px] border border-white/90 p-6 sm:p-8 max-w-md w-full shadow-[0_24px_60px_rgba(4,17,40,0.18)] space-y-4"
       >
-        <h3 className="font-display font-normal text-2xl text-[#041128]">{title}</h3>
+        <h3 className="font-primary font-normal text-2xl text-[#041128]">{title}</h3>
         <p className="text-sm text-[#41516B] leading-relaxed">{description}</p>
         <div className="flex gap-3 pt-3">
           <button

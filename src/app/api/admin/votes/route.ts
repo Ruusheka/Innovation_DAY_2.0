@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { getSession } from '@/lib/auth/getSession';
 import { canVote } from '@/lib/permissions';
 import { voteSchema } from '@/lib/validations/vote';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 // ============================================================
 // POST /api/admin/votes
@@ -19,6 +20,15 @@ export async function POST(request: NextRequest) {
     }
     if (!canVote(session.admin.role)) {
       return NextResponse.json({ error: 'Forbidden: insufficient permissions' }, { status: 403 });
+    }
+
+    // ── 1.5 Rate Limiting (60 votes / min per desk) ───────────
+    const limit = checkRateLimit(`vote:${session.admin.id}`, 60, 60000);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: 'Too many vote submissions in a short period. Please wait a moment.' },
+        { status: 429 }
+      );
     }
 
     // ── 2. Parse & validate request body ─────────────────────
