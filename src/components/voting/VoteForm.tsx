@@ -54,9 +54,12 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
   }, []);
 
   // Filter projects by selected project department
-  const filteredProjects = allProjects.filter((p) => {
+  const filteredProjects = allProjects.filter((p: any) => {
     if (!projectDepartment) return false;
-    return p.department?.code?.toUpperCase() === projectDepartment.toUpperCase();
+    const target = projectDepartment.trim().toUpperCase();
+    const deptCode = (p.department?.code || p.departments?.code || '')?.toUpperCase();
+    const deptName = (p.department?.name || p.departments?.name || '')?.toUpperCase();
+    return deptCode === target || deptName === target || deptName.includes(target);
   });
 
   // Handle Check ID

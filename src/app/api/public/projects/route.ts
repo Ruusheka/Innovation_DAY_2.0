@@ -43,7 +43,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to load projects' }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    const normalised = (data ?? []).map((p: any) => ({
+      ...p,
+      department: p.departments ?? p.department ?? undefined,
+    }));
+
+    return NextResponse.json({ data: normalised });
   } catch (err) {
     console.error('[public/projects] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
