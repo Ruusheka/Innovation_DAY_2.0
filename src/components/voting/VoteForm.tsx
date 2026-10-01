@@ -70,8 +70,8 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       toast.error('Please enter a Student ID.');
       return;
     }
-    if (!/^\d{6}$/.test(cleanId)) {
-      toast.error('Student ID must be exactly 6 digits.');
+    if (!/^\d{7}$/.test(cleanId)) {
+      toast.error('Student ID must be exactly 7 digits.');
       return;
     }
 
@@ -128,8 +128,8 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       toast.error('Please enter a Student ID.');
       return;
     }
-    if (!/^\d{6}$/.test(studentId.trim())) {
-      toast.error('Student ID must be exactly 6 digits.');
+    if (!/^\d{7}$/.test(studentId.trim())) {
+      toast.error('Student ID must be exactly 7 digits.');
       return;
     }
     if (!idChecked || alreadyVoted) {
@@ -232,10 +232,10 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
               ref={studentIdInputRef}
               type="text"
               inputMode="numeric"
-              maxLength={6}
+              maxLength={7}
               value={studentId}
               onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                const val = e.target.value.replace(/\D/g, '').slice(0, 7);
                 setStudentId(val);
                 if (idChecked) {
                   setIdChecked(false);
@@ -243,7 +243,7 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
                   setCheckMessage('');
                 }
               }}
-              placeholder="Enter 6-digit Student ID (e.g. 123456)"
+              placeholder="Enter 7-digit Student ID (e.g. 1234567)"
               disabled={checkingId || submitting}
               className="w-full input-clean font-mono text-base font-semibold"
             />

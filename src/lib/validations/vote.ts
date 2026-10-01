@@ -7,7 +7,7 @@ export const voteSchema = z.object({
   studentId: z
     .string()
     .trim()
-    .regex(/^\d{6}$/, 'Student ID must be exactly 6 digits.'),
+    .regex(/^\d{7}$/, 'Student ID must be exactly 7 digits.'),
   studentName: z
     .string()
     .min(1, 'Please enter the student\'s name.')

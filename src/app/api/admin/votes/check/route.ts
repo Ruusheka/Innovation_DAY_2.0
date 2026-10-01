@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Please enter a Student ID.' }, { status: 400 });
     }
 
-    // Require exactly 6 digits
-    if (!/^\d{6}$/.test(studentId)) {
-      return NextResponse.json({ error: 'Student ID must be exactly 6 digits.' }, { status: 400 });
+    // Require exactly 7 digits
+    if (!/^\d{7}$/.test(studentId)) {
+      return NextResponse.json({ error: 'Student ID must be exactly 7 digits.' }, { status: 400 });
     }
 
     const supabase = createServiceClient();
