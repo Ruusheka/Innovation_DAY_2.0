@@ -3,13 +3,12 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { getSession } from '@/lib/auth/getSession';
 import { canVote } from '@/lib/permissions';
 import { voteSchema } from '@/lib/validations/vote';
-import { PostgrestError } from '@supabase/supabase-js';
 
 // ============================================================
 // POST /api/admin/votes
-// Cast a vote. ALL validation happens server-side.
-// Duplicate protection: PostgreSQL UNIQUE(student_id) on votes table
-// This means even concurrent requests are safe — DB rejects duplicates
+// Cast a vote without any student database dependency.
+// Enforces duplicate vote protection via PostgreSQL UNIQUE(student_id)
+// on the votes table. Concurrency-safe against race conditions.
 // ============================================================
 export async function POST(request: NextRequest) {
   try {
@@ -19,83 +18,56 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     if (!canVote(session.admin.role)) {
-      return NextResponse.json({ error: 'Forbidden: insufficient role' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden: insufficient permissions' }, { status: 403 });
     }
 
     // ── 2. Parse & validate request body ─────────────────────
     const body = await request.json().catch(() => null);
     if (!body) {
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
     }
 
     const parseResult = voteSchema.safeParse(body);
     if (!parseResult.success) {
+      const firstError = Object.values(parseResult.error.flatten().fieldErrors)[0]?.[0];
       return NextResponse.json(
-        { error: 'Validation failed', details: parseResult.error.flatten() },
+        { error: firstError ?? 'Validation failed.' },
         { status: 400 }
       );
     }
 
-    const { studentId, projectUuid, departmentUuid, idCardVerified } = parseResult.data;
+    const {
+      studentId,
+      studentName,
+      studentDepartment,
+      projectDepartment,
+      projectUuid,
+      idCardVerified,
+    } = parseResult.data;
 
     if (!idCardVerified) {
       return NextResponse.json(
-        { error: 'ID card must be verified before casting a vote.' },
+        { error: 'Physical ID card verification is required.' },
         { status: 400 }
       );
     }
 
     const supabase = createServiceClient();
 
-    // ── 3. Check voting is enabled ────────────────────────────
+    // ── 3. Check voting is enabled in event settings ───────────
     const { data: settings } = await supabase
       .from('event_settings')
       .select('voting_enabled')
       .single();
 
-    if (!settings?.voting_enabled) {
+    if (settings && settings.voting_enabled === false) {
       return NextResponse.json(
-        { error: 'Voting is currently closed. Contact the event organizer.' },
+        { error: 'Voting is currently closed. Please contact the administrator.' },
         { status: 403 }
       );
     }
 
-    // ── 4. Verify student exists and is active ────────────────
-    const { data: student, error: studentError } = await supabase
-      .from('students')
-      .select('id, name, is_active, student_id')
-      .eq('student_id', studentId.trim())
-      .single();
-
-    if (studentError || !student) {
-      return NextResponse.json(
-        { error: 'Student not found. Please verify the student ID.' },
-        { status: 404 }
-      );
-    }
-
-    if (!student.is_active) {
-      return NextResponse.json(
-        { error: 'This student account is inactive.' },
-        { status: 403 }
-      );
-    }
-
-    // ── 5. Verify department exists ───────────────────────────
-    const { data: department, error: deptError } = await supabase
-      .from('departments')
-      .select('id, name, is_active')
-      .eq('id', departmentUuid)
-      .single();
-
-    if (deptError || !department || !department.is_active) {
-      return NextResponse.json(
-        { error: 'Invalid or inactive department.' },
-        { status: 400 }
-      );
-    }
-
-    // ── 6. Verify project exists, is active, and belongs to dept ─
+    // ── 4. Verify project exists and is active ────────────────
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .select('id, title, is_active, department_id')
@@ -116,103 +88,77 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (project.department_id !== departmentUuid) {
-      return NextResponse.json(
-        { error: 'Project does not belong to the selected department.' },
-        { status: 400 }
-      );
-    }
-
-    // ── 7. Pre-flight duplicate check (informational, NOT the safety net) ─
-    // The real safety is the UNIQUE constraint on votes.student_id
-    const { data: existingVote } = await supabase
-      .from('votes')
-      .select('id')
-      .eq('student_id', student.id)
-      .single();
-
-    if (existingVote) {
-      // Log the duplicate attempt
-      await supabase.from('audit_logs').insert({
-        admin_id: session.admin.id,
-        action: 'DUPLICATE_VOTE_ATTEMPT',
-        target_type: 'student',
-        target_id: student.student_id,
-        metadata: {
-          attempted_project_id: projectUuid,
-          student_name: student.name,
-        },
-      });
-
-      return NextResponse.json(
-        { error: 'THIS STUDENT HAS ALREADY VOTED.' },
-        { status: 409 }
-      );
-    }
-
-    // ── 8. INSERT VOTE ATOMICALLY ─────────────────────────────
-    // The UNIQUE(student_id) constraint on votes guarantees that
-    // even if two concurrent requests pass the pre-flight check,
-    // only ONE will succeed at the DB level.
-    const { data: vote, error: voteError } = await supabase
+    // ── 5. Insert vote into votes table ───────────────────────
+    // Database UNIQUE(student_id) constraint guarantees concurrency protection
+    const { data: newVote, error: insertError } = await supabase
       .from('votes')
       .insert({
-        student_id: student.id,
+        student_id: studentId.trim(),
+        student_name: studentName.trim(),
+        student_department: studentDepartment.trim(),
         project_id: projectUuid,
+        project_department: projectDepartment.trim(),
         voted_by: session.admin.id,
-        id_card_verified: idCardVerified,
-        verified_at: new Date().toISOString(),
+        id_card_verified: true,
       })
-      .select('id')
+      .select('id, student_id, created_at')
       .single();
 
-    // Handle unique constraint violation (concurrent duplicate)
-    if (voteError) {
-      const pgError = voteError as PostgrestError;
-      if (pgError.code === '23505') {
-        // PostgreSQL unique_violation
-        await supabase.from('audit_logs').insert({
-          admin_id: session.admin.id,
-          action: 'DUPLICATE_VOTE_ATTEMPT',
-          target_type: 'student',
-          target_id: student.student_id,
-          metadata: { reason: 'concurrent_duplicate', attempted_project_id: projectUuid },
-        });
-
+    if (insertError) {
+      // 23505 is PostgreSQL unique_violation code
+      if (insertError.code === '23505') {
         return NextResponse.json(
-          { error: 'THIS STUDENT HAS ALREADY VOTED.' },
+          {
+            success: false,
+            code: 'ALREADY_VOTED',
+            error: 'This Student ID has already voted.',
+          },
           { status: 409 }
         );
       }
 
-      console.error('[admin/votes] DB insert error:', voteError.message);
+      console.error('[votes/insert] Database error:', insertError);
       return NextResponse.json(
-        { error: 'Failed to record vote. Please try again.' },
+        { error: 'Unable to record the vote. Please try again.' },
         { status: 500 }
       );
     }
 
-    // ── 9. Audit log — successful vote ───────────────────────
-    await supabase.from('audit_logs').insert({
-      admin_id: session.admin.id,
-      action: 'CAST_VOTE',
-      target_type: 'vote',
-      target_id: vote!.id,
-      metadata: {
-        student_id: student.student_id,
-        student_name: student.name,
-        project_id: projectUuid,
-        project_title: project.title,
-        department_id: departmentUuid,
+    // ── 6. Log audit record (safe) ───────────────────────────
+    try {
+      await supabase.from('audit_logs').insert({
+        admin_id: session.admin.id,
+        action: 'CAST_VOTE',
+        target_type: 'vote',
+        target_id: newVote?.id ?? null,
+        metadata: {
+          student_id: studentId.trim(),
+          project_uuid: projectUuid,
+          project_title: project.title,
+          student_department: studentDepartment.trim(),
+        },
+      });
+    } catch (auditErr) {
+      console.warn('[audit_log] Non-fatal log failure:', auditErr);
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: 'Vote recorded successfully.',
+        data: {
+          voteId: newVote?.id,
+          studentId: studentId.trim(),
+          projectTitle: project.title,
+        },
       },
-    });
-
-    return NextResponse.json({
-      data: { message: 'Vote recorded successfully.', voteId: vote!.id },
-    }, { status: 201 });
-
+      { status: 201 }
+    );
   } catch (err) {
-    console.error('[admin/votes] Unexpected error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('[votes] Unexpected error:', err);
+    return NextResponse.json(
+      { error: 'Internal server error while processing vote.' },
+      { status: 500 }
+    );
   }
 }

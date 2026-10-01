@@ -6,7 +6,7 @@ import { projectSchema } from '@/lib/validations/project';
 
 // ============================================================
 // PATCH /api/admin/projects/[id]
-// Update a project (full update)
+// Update a project
 // ============================================================
 export async function PATCH(
   request: NextRequest,
@@ -71,6 +71,79 @@ export async function PATCH(
     return NextResponse.json({ data });
   } catch (err) {
     console.error('[admin/projects/[id] PATCH] error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// ============================================================
+// DELETE /api/admin/projects/[id]
+// Safely delete a project if it has no votes
+// ============================================================
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!canManageProjects(session.admin.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { id } = await params;
+    const supabase = createServiceClient();
+
+    // Check if the project has existing votes
+    const { count: voteCount, error: voteCountError } = await supabase
+      .from('votes')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', id);
+
+    if (voteCountError) {
+      console.error('[admin/projects/[id] DELETE] Check votes error:', voteCountError.message);
+    }
+
+    if (voteCount && voteCount > 0) {
+      return NextResponse.json(
+        { error: 'This project already has votes and cannot be deleted. You can deactivate it instead.' },
+        { status: 400 }
+      );
+    }
+
+    // Safely delete the project
+    const { data: deletedProject, error: deleteError } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id)
+      .select('id, project_id, title, image_url')
+      .single();
+
+    if (deleteError) {
+      console.error('[admin/projects/[id] DELETE] error:', deleteError.message);
+      return NextResponse.json({ error: 'Failed to delete project.' }, { status: 500 });
+    }
+
+    // Optional: remove image from storage if stored in project-images
+    if (deletedProject?.image_url && deletedProject.image_url.includes('project-images')) {
+      const parts = deletedProject.image_url.split('/');
+      const fileName = parts[parts.length - 1];
+      if (fileName) {
+        supabase.storage.from('project-images').remove([fileName]).then(() => {});
+      }
+    }
+
+    // Audit log
+    await supabase.from('audit_logs').insert({
+      admin_id: session.admin.id,
+      action: 'DELETE_PROJECT',
+      target_type: 'project',
+      target_id: id,
+      metadata: { project_id: deletedProject?.project_id, title: deletedProject?.title },
+    });
+
+    return NextResponse.json({ success: true, message: 'Project deleted successfully.' });
+  } catch (err) {
+    console.error('[admin/projects/[id] DELETE] error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

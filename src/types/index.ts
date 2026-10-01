@@ -52,12 +52,13 @@ export interface AdminUser {
 export interface Vote {
   id: string;
   student_id: string;
+  student_name: string;
+  student_department: string | null;
   project_id: string;
-  voted_by: string;
+  project_department: string | null;
+  voted_by: string | null;
   id_card_verified: boolean;
-  verified_at: string;
   created_at: string;
-  student?: Student;
   project?: Project;
   admin?: AdminUser;
 }
@@ -107,9 +108,11 @@ export interface StudentSearchResult {
 }
 
 export interface VotePayload {
-  studentId: string;      // the text student ID (e.g. "3122245001127")
-  projectUuid: string;    // UUID of the project
-  departmentUuid: string; // UUID of the department
+  studentId: string;
+  studentName: string;
+  studentDepartment: string;
+  projectDepartment: string;
+  projectUuid: string;
   idCardVerified: boolean;
 }
 
