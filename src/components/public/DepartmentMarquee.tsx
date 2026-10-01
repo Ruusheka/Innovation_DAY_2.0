@@ -222,7 +222,7 @@ function DepartmentWaveSection({
 
     const animate = () => {
       const singleSet = singleSetWidthRef.current;
-      if (isVisible && !isDragging.current && singleSet > 0) {
+      if (isVisible && !isDragging.current && !isDownRef.current && singleSet > 0) {
         // Slow down slightly on hover
         const currentSpeed = isHovered.current ? speedRef.current * 0.25 : speedRef.current;
         offsetRef.current += currentSpeed * direction;
@@ -270,15 +270,21 @@ function DepartmentWaveSection({
     if (!isDownRef.current) return;
     const deltaX = e.clientX - dragStartX.current;
     const deltaY = e.clientY - dragStartY.current;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
 
     // Mobile gesture detection: if user is primarily scrolling vertically, let the page scroll freely
     if (!isDragging.current) {
-      if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
+      if (absY > 8 && absY > absX * 1.1) {
+        // Clear vertical scroll detected: cancel dragging and yield control to browser native page scroll
         isDownRef.current = false;
         return;
       }
-      if (Math.abs(deltaX) > 6) {
+      if (absX > 8 && absX > absY) {
+        // Clear horizontal swipe detected: lock marquee dragging
         isDragging.current = true;
+        dragStartOffset.current = offsetRef.current;
+        dragStartX.current = e.clientX;
         try {
           (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
         } catch {}
@@ -286,10 +292,10 @@ function DepartmentWaveSection({
     }
 
     if (isDragging.current) {
-      dragDistanceX.current = Math.abs(deltaX);
+      dragDistanceX.current = Math.abs(e.clientX - dragStartX.current);
       const singleSet = singleSetWidthRef.current;
       if (singleSet > 0) {
-        let newOffset = dragStartOffset.current + deltaX;
+        let newOffset = dragStartOffset.current + (e.clientX - dragStartX.current);
 
         // Wrap continuously during user dragging
         while (newOffset <= -singleSet * (loopCount - 1)) newOffset += singleSet;
@@ -302,6 +308,9 @@ function DepartmentWaveSection({
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch') {
+      isHovered.current = false;
+    }
     if (!isDownRef.current) return;
     isDownRef.current = false;
 
@@ -317,7 +326,9 @@ function DepartmentWaveSection({
     }
 
     try {
-      (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+      if ((e.currentTarget as HTMLElement).hasPointerCapture?.(e.pointerId)) {
+        (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+      }
     } catch {}
   };
 
@@ -403,7 +414,7 @@ function DepartmentWaveSection({
       ) : (
         /* Case 4+: 4+ Projects — Continuous Infinite Scroll + Dynamic Travelling Sine-Wave Marquee */
         <div
-          className="group/track relative w-full overflow-hidden pt-2 pb-48 lg:pb-56 touch-none cursor-grab active:cursor-grabbing"
+          className="group/track relative w-full overflow-hidden pt-2 pb-48 lg:pb-56 touch-pan-y cursor-grab active:cursor-grabbing"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -486,12 +497,12 @@ function WaveProjectCard({
       onClick={handleClick}
       draggable={false}
       className={cn(
-        'group/card block w-[280px] sm:w-[310px] md:w-[330px] lg:w-[350px] shrink-0 focus:outline-none select-none relative z-10 hover:z-30 transition-transform duration-300'
+        'group/card block w-[280px] sm:w-[310px] md:w-[330px] lg:w-[350px] shrink-0 focus:outline-none select-none relative z-10 hover:z-30 transition-transform duration-300 touch-pan-y'
       )}
     >
       <div
         className={cn(
-          'relative rounded-[26px] bg-white/90 backdrop-blur-[18px] border border-white/95 p-4 sm:p-5',
+          'relative rounded-[26px] bg-white/90 backdrop-blur-[18px] border border-white/95 p-4 sm:p-5 touch-pan-y',
           'shadow-[0_15px_45px_rgba(4,17,40,0.08)] hover:shadow-[0_24px_55px_rgba(4,17,40,0.16)]',
           'hover:border-[#91A9C9] hover:bg-white',
           'transition-all duration-300 ease-out transform',
@@ -499,7 +510,7 @@ function WaveProjectCard({
         )}
       >
         {/* 1. Large Project Image (60–70% of card visual area) */}
-        <div className="relative w-full aspect-[16/11] rounded-[20px] overflow-hidden bg-[#FAF9F5] mb-3.5 border border-[rgba(4,17,40,0.06)] shadow-xs">
+        <div className="relative w-full aspect-[16/11] rounded-[20px] overflow-hidden bg-[#FAF9F5] mb-3.5 border border-[rgba(4,17,40,0.06)] shadow-xs pointer-events-none">
           <Image
             src={imageUrl}
             alt={`${project.title} - Build Club Innovation Day exhibition project`}

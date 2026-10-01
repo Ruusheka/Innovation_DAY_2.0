@@ -72,8 +72,8 @@ export default async function HomePage() {
               {[
                 {
                   icon: Layers,
-                  title: '7 Disciplines',
-                  desc: 'Cross-functional engineering spanning CSE, ECE, EEE, MECH, CIVIL, IT, and M.Tech CSE.',
+                  title: `${departments.length || 9} Disciplines`,
+                  desc: 'Cross-functional engineering spanning CSE, IT, M.Tech CSE, ECE, EEE, MECH, CIVIL, CHEM, and BME.',
                 },
                 {
                   icon: Sparkles,
@@ -127,7 +127,9 @@ export default async function HomePage() {
 
               <div className="grid grid-cols-3 gap-6 sm:gap-10 shrink-0 text-center">
                 <div>
-                  <div className="font-primary text-3xl sm:text-4xl text-white">7</div>
+                  <div className="font-primary text-3xl sm:text-4xl text-white">
+                    {departments.length > 0 ? departments.length : 9}
+                  </div>
                   <div className="text-[11px] font-semibold text-[#91A9C9] uppercase tracking-wider mt-1">
                     Departments
                   </div>

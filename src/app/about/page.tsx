@@ -69,7 +69,7 @@ export default function AboutPage() {
                 Cross-Departmental Collaboration
               </h2>
               <p className="font-sans text-[#3D5574] text-base leading-relaxed">
-                Projects span CSE, ECE, EEE, MECH, MTech CSE and CIVIL disciplines. Modern engineering challenges demand interdisciplinary thinking where embedded electronics, code, and mechanical structures coalesce.
+                Projects span CSE, ECE, EEE, MECH, CHEM, BME, MTech CSE and CIVIL disciplines. Modern engineering challenges demand interdisciplinary thinking where embedded electronics, code, and mechanical structures coalesce.
               </p>
             </div>
 
