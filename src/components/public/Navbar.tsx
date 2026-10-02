@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { User, Menu, X, ArrowUpRight } from 'lucide-react';
+import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 interface NavItem {
@@ -22,7 +22,6 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [activeSection, setActiveSection] = useState<string>('hero');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -82,21 +81,25 @@ export function Navbar() {
             : 'shadow-[0_10px_35px_rgba(4,17,40,0.08)]'
         )}
       >
-        {/* 1. Left: Build Club Logo */}
+        {/* 1. Left: Build Club × Lakshya Logo Lockup */}
         <Link
           href="/#hero"
           onClick={(e) => handleNavClick(e, { id: 'hero', label: 'Home', href: '/#hero' })}
-          className="inline-flex items-center gap-2 group transition-opacity hover:opacity-90 pl-1 shrink-0"
+          className="inline-flex items-center gap-1.5 sm:gap-2 group transition-opacity hover:opacity-90 pl-1 shrink-0"
         >
-          <div className="relative w-[160px] sm:w-[185px] h-9 sm:h-10">
+          <div className="relative w-[52px] sm:w-[58px] h-9 sm:h-10 shrink-0">
             <Image
               src="/logo.png"
-              alt="BUILD CLUB — SSN I FOUND"
+              alt="BUILD CLUB"
               fill
               priority
-              className="object-contain object-left"
-              sizes="185px"
+              className="object-contain"
+              sizes="60px"
             />
+          </div>
+          <span aria-hidden="true" className="font-serif italic font-light text-[15px] sm:text-[18px] text-[#E5A83B] select-none mx-0.5 leading-none opacity-90">×</span>
+          <div className="relative w-[34px] h-[34px] sm:w-[42px] sm:h-[42px] shrink-0">
+            <Image src="/LakLogo.png" alt="Lakshya" fill sizes="42px" className="object-contain" />
           </div>
         </Link>
 

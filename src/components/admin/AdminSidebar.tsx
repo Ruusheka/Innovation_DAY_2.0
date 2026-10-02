@@ -21,14 +21,20 @@ export function AdminSidebar() {
     <aside className="hidden lg:flex flex-col w-64 min-h-screen border-r border-[#D9E1EA] bg-white/80 backdrop-blur-[20px] fixed left-0 top-0 bottom-0 z-30 font-primary">
       {/* Brand & Logo — Visually Centered Flex Column (120px width) */}
       <div className="px-6 py-7 border-b border-[rgba(4,17,40,0.06)] flex flex-col items-center justify-center text-center">
-        <div className="relative w-[122px] h-[92px] mb-3 flex items-center justify-center">
-          <Image
-            src="/logo.png"
-            alt="BUILD CLUB Logo"
-            fill
-            className="object-contain"
-            priority
-          />
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <div className="relative w-[56px] h-[42px] shrink-0">
+            <Image
+              src="/logo.png"
+              alt="BUILD CLUB Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <span aria-hidden="true" className="font-serif italic font-light text-[17px] text-[#E5A83B] select-none mx-0.5 opacity-90">×</span>
+          <div className="relative w-[42px] h-[42px] shrink-0">
+            <Image src="/LakLogo.png" alt="Lakshya" fill sizes="42px" className="object-contain" />
+          </div>
         </div>
         <div className="text-[11.5px] font-primary font-normal text-[#5277A8] tracking-[0.2em] uppercase leading-snug text-center">
           REGISTRATION<br />DESK PORTAL

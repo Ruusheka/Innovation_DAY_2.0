@@ -86,14 +86,20 @@ export default function AdminLoginPage() {
         >
           {/* Logo & Header */}
           <div className="text-center mb-8">
-            <div className="relative h-12 w-48 mx-auto mb-4">
-              <Image
-                src="/logo.png"
-                alt="BUILD CLUB Logo"
-                fill
-                className="object-contain"
-                priority
-              />
+            <div className="flex items-center justify-center gap-2.5 mb-4">
+              <div className="relative h-[42px] w-[56px] shrink-0">
+                <Image
+                  src="/logo.png"
+                  alt="BUILD CLUB Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <span aria-hidden="true" className="font-serif italic font-light text-[18px] text-[#E5A83B] select-none mx-0.5 opacity-90">×</span>
+              <div className="relative h-[42px] w-[42px] shrink-0">
+                <Image src="/LakLogo.png" alt="Lakshya" fill sizes="42px" className="object-contain" />
+              </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-normal text-[#041128] tracking-tight">
               Admin Portal

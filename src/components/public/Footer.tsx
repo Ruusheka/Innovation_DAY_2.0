@@ -9,14 +9,19 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-12 pb-10 border-b border-white/10">
           {/* Col 1: Brand & Logo */}
           <div className="md:col-span-5 flex flex-col items-start">
-            <div className="relative h-12 w-48 mb-4">
-              <Image
-                src="/logo-white.png"
-                alt="BUILD CLUB — SSN I FOUND"
-                fill
-                className="object-contain object-left"
-                sizes="192px"
-              />
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="relative h-10 w-[54px]">
+                <Image
+                  src="/logo-white.png"
+                  alt="BUILD CLUB"
+                  fill
+                  className="object-contain"
+                  sizes="60px"
+                />
+              </div>
+              <span aria-hidden="true" className="font-serif italic font-light text-[17px] text-[#E5A83B] select-none opacity-90">×</span>
+              <div className="relative h-[38px] w-[38px]"><Image src="/LakLogo.png" alt="Lakshya" fill sizes="40px" className="object-contain" /></div>
+              <span className="text-xs uppercase tracking-[0.2em] font-semibold text-white/85">Lakshya</span>
             </div>
             <p className="text-sm text-[#848C9B] max-w-sm leading-relaxed">
               Empowering SSN engineering students to transform bold ideas into working prototypes and real-world technology solutions.

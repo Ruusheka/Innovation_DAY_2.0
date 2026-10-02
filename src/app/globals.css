@@ -1,6 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
 @import "tailwindcss";
 
+@keyframes intro-rule-expand { to { width: min(220px, 55vw); } }
+@keyframes sparkle-breathe { 0%, 100% { opacity: .55; transform: rotate(0deg); } 50% { opacity: .95; transform: rotate(18deg); } }
+.event-intro-rule { animation: intro-rule-expand .8s .65s ease-out forwards; }
+.hero-sparkle { animation: sparkle-breathe 5s ease-in-out infinite; text-shadow: 0 0 10px rgba(196,154,86,.32); }
+.hero-orbit-lines { overflow: visible; }
+
+@media (prefers-reduced-motion: reduce) {
+  .event-intro-rule { animation: none; width: min(220px, 55vw); }
+  .hero-sparkle { animation: none; }
+  *, *::before, *::after { scroll-behavior: auto !important; }
+}
+
+@media (max-width: 640px) {
+  .hero-orbit-lines { inset: -8% -5%; width: 110%; height: 116%; }
+  .hero-sparkle { right: 1%; }
+}
+
 @theme {
   --color-primary-navy: #041128;
   --color-deep-black: #040411;

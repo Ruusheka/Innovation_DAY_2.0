@@ -5,8 +5,9 @@ import { DepartmentMarquee } from '@/components/public/DepartmentMarquee';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { ArrowRight, Lightbulb, ShieldCheck, Trophy, Layers, Sparkles } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Trophy, Layers, Sparkles } from 'lucide-react';
 import type { Department, Project } from '@/types';
+import { EventIntro } from '@/components/public/EventIntro';
 
 export const revalidate = 60; // ISR: revalidate every 60 seconds
 
@@ -38,6 +39,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F7F3] scroll-smooth">
+      <EventIntro />
       {/* ── 1. FLOATING GLASS PILL NAVBAR ── */}
       <Navbar />
 
@@ -54,16 +56,16 @@ export default async function HomePage() {
             {/* Header: Editorial Eyebrow + DM Serif Heading */}
             <div className="max-w-3xl mb-12 sm:mb-16">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-5 h-[1.5px] bg-[#5277A8]" />
+                <div className="w-5 h-[1.5px] bg-[#FF9D00]" />
                 <span className="text-[11.5px] font-semibold uppercase tracking-[0.25em] text-[#5277A8]">
-                  ABOUT BUILD CLUB &bull; SSN I FOUND
+                  ABOUT BUILD CLUB &bull; LAKSHYA INNOVATION DAY
                 </span>
               </div>
               <h2 className="font-primary font-normal text-3xl sm:text-5xl lg:text-[54px] text-[#041128] tracking-tight leading-[1.08] m-0">
                 Building ideas. Engineering solutions. Creating impact.
               </h2>
               <p className="mt-5 text-[#3D5574] text-base sm:text-lg leading-relaxed">
-                The SSN I FOUND Project Exhibition is a student-driven innovation initiative hosted at SSN College of Engineering. We unite young engineers across all disciplines to solve tangible engineering challenges through hands-on fabrication and rapid prototyping.
+                The Build Club × Lakshya Innovation Day Project Exhibition is a student-driven initiative hosted at SSN College of Engineering. We unite young engineers across all disciplines to solve tangible engineering challenges through hands-on fabrication and rapid prototyping.
               </p>
             </div>
 
