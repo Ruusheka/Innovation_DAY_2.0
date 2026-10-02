@@ -337,7 +337,7 @@ function DepartmentWaveSection({
       {/* ── 1. CENTERED COMPACT DEPARTMENT HEADING ── */}
       {/* Close vertical proximity: mb-2 sm:mb-3 eliminates excessive empty gaps */}
       <div className="flex items-center justify-center gap-3 sm:gap-6 mb-2 sm:mb-3 max-w-4xl mx-auto px-4 select-none">
-        <div className="flex-1 h-[1.5px] bg-gradient-to-r from-transparent via-[#91A9C9]/50 to-[#91A9C9]" />
+        <div className="flex-1 h-[1.5px]" style={{ background: 'linear-gradient(90deg, transparent, #FF9D00, #FF5A00)' }} />
         <div className="text-center shrink-0">
           <div className="font-primary text-2xl sm:text-3xl lg:text-[38px] text-[#041128] tracking-widest font-normal uppercase leading-tight">
             {deptCode}
@@ -346,7 +346,7 @@ function DepartmentWaveSection({
             {deptName}
           </div>
         </div>
-        <div className="flex-1 h-[1.5px] bg-gradient-to-l from-transparent via-[#91A9C9]/50 to-[#91A9C9]" />
+        <div className="flex-1 h-[1.5px]" style={{ background: 'linear-gradient(90deg, #FF5A00, #FF9D00, transparent)' }} />
       </div>
 
       {/* ── 2. PROJECT WAVE TRACK / CASES ── */}
