@@ -7,7 +7,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 
 // ============================================================
 // POST /api/admin/votes
-// Cast a vote without any student database dependency.
+// Cast a vote with normalized department foreign key resolution.
 // Enforces duplicate vote protection via PostgreSQL UNIQUE(student_id)
 // on the votes table. Concurrency-safe against race conditions.
 // ============================================================
@@ -77,10 +77,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── 4. Verify project exists and is active ────────────────
+    // ── 4. Authoritative project & department resolution ─────
+    // Fetch project with joined departments table record
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('id, title, is_active, department_id')
+      .select(`
+        id,
+        title,
+        is_active,
+        department_id,
+        departments (
+          id,
+          name,
+          code
+        )
+      `)
       .eq('id', projectUuid)
       .single();
 
@@ -98,8 +109,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const resolvedProjectDept = (project as any).departments as { id: string; name: string; code: string } | null;
+    const authoritativeDeptId = project.department_id || resolvedProjectDept?.id;
+    const authoritativeDeptCode = resolvedProjectDept?.code || projectDepartment.trim().toUpperCase();
+
+    // Safely resolve student's department code from departments table
+    const { data: matchingStudentDept } = await supabase
+      .from('departments')
+      .select('id, code, name')
+      .or(`code.ilike.${studentDepartment.trim()},name.ilike.${studentDepartment.trim()}`)
+      .maybeSingle();
+
+    const normalizedStudentDept = matchingStudentDept?.code || studentDepartment.trim();
+
     // ── 5. Insert vote into votes table ───────────────────────
-    // Database UNIQUE(student_id) constraint guarantees concurrency protection
+    // Direct insert with normalized department_id foreign key reference
     let newVote: { id: string; student_id?: string; created_at: string } | null = null;
 
     const { data: directVote, error: insertError } = await supabase
@@ -107,9 +131,10 @@ export async function POST(request: NextRequest) {
       .insert({
         student_id: studentId.trim(),
         student_name: studentName.trim(),
-        student_department: studentDepartment.trim(),
+        student_department: normalizedStudentDept,
+        department_id: authoritativeDeptId,
         project_id: projectUuid,
-        project_department: projectDepartment.trim(),
+        project_department: authoritativeDeptCode,
         voted_by: session.admin.id,
         id_card_verified: true,
       })
@@ -129,7 +154,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // If database is still running initial UUID schema (migration 002 not yet applied)
+      // If database is still running initial UUID schema (migration fallback)
       if (
         insertError.code === '22P02' ||
         insertError.code === 'PGRST204' ||
@@ -137,7 +162,6 @@ export async function POST(request: NextRequest) {
         insertError.message?.includes('column')
       ) {
         // Fallback for UUID schema:
-        // A. Find or register student in students table
         let studentRecord: { id: string } | null = null;
 
         const { data: existingStudent } = await supabase
@@ -154,6 +178,7 @@ export async function POST(request: NextRequest) {
             .insert({
               student_id: studentId.trim(),
               name: studentName.trim(),
+              department_id: matchingStudentDept?.id || null,
             })
             .select('id')
             .single();
@@ -179,12 +204,13 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Unable to process student record.' }, { status: 500 });
         }
 
-        // B. Insert into votes using student UUID
+        // Insert into votes using student UUID
         const { data: fbVote, error: fbVoteErr } = await supabase
           .from('votes')
           .insert({
             student_id: studentRecord.id,
             project_id: projectUuid,
+            department_id: authoritativeDeptId,
             voted_by: session.admin.id,
             id_card_verified: true,
           })
@@ -229,7 +255,9 @@ export async function POST(request: NextRequest) {
           student_id: studentId.trim(),
           project_uuid: projectUuid,
           project_title: project.title,
-          student_department: studentDepartment.trim(),
+          department_id: authoritativeDeptId,
+          department_code: authoritativeDeptCode,
+          student_department: normalizedStudentDept,
         },
       });
     } catch (auditErr) {
@@ -244,6 +272,7 @@ export async function POST(request: NextRequest) {
           voteId: newVote?.id,
           studentId: studentId.trim(),
           projectTitle: project.title,
+          departmentCode: authoritativeDeptCode,
         },
       },
       { status: 201 }

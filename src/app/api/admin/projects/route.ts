@@ -22,7 +22,7 @@ export async function GET() {
       .from('projects')
       .select(`
         *,
-        departments (id, name, code)
+        departments (id, name, code, color, accent_color)
       `)
       .order('project_id', { ascending: true });
 
@@ -39,7 +39,7 @@ export async function GET() {
 
 // ============================================================
 // POST /api/admin/projects
-// Create a new project
+// Create a new project with team members, supervisor, and tags
 // ============================================================
 export async function POST(request: NextRequest) {
   try {
@@ -65,11 +65,18 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('projects')
       .insert({
-        ...parseResult.data,
-        description: parseResult.data.description || null,
-        image_url: parseResult.data.image_url || null,
+        project_id: parseResult.data.project_id.trim().toUpperCase(),
+        department_id: parseResult.data.department_id,
+        title: parseResult.data.title.trim(),
+        description: parseResult.data.description?.trim() || null,
+        project_lead: parseResult.data.project_lead.trim(),
+        team_members: parseResult.data.team_members ?? [],
+        project_supervisor: parseResult.data.project_supervisor?.trim() || null,
+        tags: parseResult.data.tags ?? [],
+        image_url: parseResult.data.image_url?.trim() || null,
+        is_active: parseResult.data.is_active,
       })
-      .select(`*, departments(id, name, code)`)
+      .select(`*, departments(id, name, code, color, accent_color)`)
       .single();
 
     if (error) {

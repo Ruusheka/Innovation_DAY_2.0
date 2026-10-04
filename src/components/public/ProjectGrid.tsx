@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ProjectCard } from './ProjectCard';
 import { DepartmentTabs } from './DepartmentTabs';
@@ -8,7 +8,7 @@ import { Search } from 'lucide-react';
 import type { Department, Project } from '@/types';
 
 interface ProjectGridProps {
-  projects: (Project & { department?: { id: string; name: string; code: string } })[];
+  projects: (Project & { department?: { id: string; name: string; code: string; color?: string | null; accent_color?: string | null } })[];
   departments: Department[];
   showFiltersOnly?: boolean;
 }
@@ -26,6 +26,9 @@ export function ProjectGrid({ projects, departments }: ProjectGridProps) {
         p.title.toLowerCase().includes(q) ||
         p.project_id.toLowerCase().includes(q) ||
         p.project_lead.toLowerCase().includes(q) ||
+        (p.project_supervisor && p.project_supervisor.toLowerCase().includes(q)) ||
+        (p.tags && p.tags.some((t) => t.toLowerCase().includes(q))) ||
+        (p.team_members && p.team_members.some((m) => m.toLowerCase().includes(q))) ||
         (p.department?.name && p.department.name.toLowerCase().includes(q)) ||
         (p.department?.code && p.department.code.toLowerCase().includes(q));
       return matchDept && matchSearch;
@@ -35,7 +38,7 @@ export function ProjectGrid({ projects, departments }: ProjectGridProps) {
   const activeDeptObj = departments.find((d) => d.id === activeDeptId);
 
   return (
-    <div className="w-full">
+    <div className="w-full font-primary">
       {/* ── 1. DEPARTMENT FILTER ROW ── */}
       <div id="departments" className="mb-8 sm:mb-10">
         <DepartmentTabs
@@ -47,7 +50,7 @@ export function ProjectGrid({ projects, departments }: ProjectGridProps) {
 
       {/* ── 2. SEARCH & COUNT BAR ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pt-2">
-        <div className="text-[14.5px] font-sans font-medium text-[#41516B]">
+        <div className="text-[14.5px] font-medium text-[#41516B]">
           Showing <span className="text-[#041128] font-bold">{filtered.length}</span> project
           {filtered.length !== 1 ? 's' : ''}
           {activeDeptObj ? ` in ${activeDeptObj.name}` : ' across all departments'}
@@ -58,10 +61,10 @@ export function ProjectGrid({ projects, departments }: ProjectGridProps) {
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#848C9B]" />
           <input
             type="text"
-            placeholder="Search projects or leads..."
+            placeholder="Search projects, leads, tags, advisors..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm font-sans rounded-full bg-white border border-[#D9E1EA] text-[#041128] placeholder-[#848C9B] focus:outline-none focus:border-[#041128] focus:ring-2 focus:ring-[#5277A8]/10 transition-all shadow-sm"
+            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-full bg-white border border-[#D9E1EA] text-[#041128] placeholder-[#848C9B] focus:outline-none focus:border-[#041128] focus:ring-2 focus:ring-[#5277A8]/10 transition-all shadow-sm"
           />
         </div>
       </div>
@@ -74,12 +77,12 @@ export function ProjectGrid({ projects, departments }: ProjectGridProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="py-16 sm:py-20 text-center rounded-[20px] bg-white border border-[#DDE5EE]"
+            className="py-16 sm:py-20 text-center rounded-[24px] bg-white border border-[#DDE5EE] shadow-sm"
           >
-            <p className="font-display text-2xl text-[#041128]">No Projects Found</p>
-            <p className="text-[#848C9B] font-sans text-sm mt-2 max-w-sm mx-auto">
+            <p className="text-2xl text-[#041128] font-semibold">No Projects Found</p>
+            <p className="text-[#848C9B] text-sm mt-2 max-w-sm mx-auto font-normal">
               {search
-                ? 'No projects match your search criteria. Try using different keywords.'
+                ? 'No projects match your search criteria. Try searching with different keywords, team names, or tags.'
                 : 'No active projects are registered under this department yet.'}
             </p>
           </motion.div>

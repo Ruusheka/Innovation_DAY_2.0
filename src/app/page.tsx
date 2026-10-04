@@ -17,7 +17,11 @@ export default async function HomePage() {
   const [projectsRes, deptsRes] = await Promise.all([
     supabase
       .from('projects')
-      .select(`id, project_id, title, description, project_lead, image_url, department_id, is_active, created_at, updated_at, departments(id, name, code)`)
+      .select(`
+        id, project_id, title, description, project_lead, team_members, project_supervisor, tags, image_url,
+        department_id, is_active, created_at, updated_at,
+        departments(id, name, code, color, accent_color)
+      `)
       .eq('is_active', true)
       .order('project_id', { ascending: true }),
     supabase
@@ -34,11 +38,13 @@ export default async function HomePage() {
 
   const normalised = rawProjects.map((p) => ({
     ...p,
+    team_members: Array.isArray(p.team_members) ? p.team_members : [],
+    tags: Array.isArray(p.tags) ? p.tags : [],
     department: p.departments ?? undefined,
   }));
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F7F3] scroll-smooth">
+    <div className="min-h-screen flex flex-col bg-[#F8F7F3] scroll-smooth font-primary">
       <EventIntro />
       {/* ── 1. FLOATING GLASS PILL NAVBAR ── */}
       <Navbar />
@@ -49,11 +55,10 @@ export default async function HomePage() {
 
         {/* ── 3. ABOUT SECTION (#about) ── */}
         <section id="about" className="py-20 sm:py-28 bg-[#F8F7F3] border-t border-[rgba(4,17,40,0.06)] relative overflow-hidden">
-          {/* Subtle background ambient blur */}
           <div className="pointer-events-none absolute -top-40 right-1/4 w-[450px] h-[450px] rounded-full bg-[#EDF4FC]/60 blur-3xl -z-10" />
 
           <PageContainer>
-            {/* Header: Editorial Eyebrow + DM Serif Heading */}
+            {/* Header: Editorial Eyebrow + Heading */}
             <div className="max-w-3xl mb-12 sm:mb-16">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-5 h-[1.5px] bg-[#FF9D00]" />
@@ -61,7 +66,7 @@ export default async function HomePage() {
                   ABOUT BUILD CLUB &bull; LAKSHYA INNOVATION DAY
                 </span>
               </div>
-              <h2 className="font-primary font-normal text-3xl sm:text-5xl lg:text-[54px] text-[#041128] tracking-tight leading-[1.08] m-0">
+              <h2 className="font-normal text-3xl sm:text-5xl lg:text-[54px] text-[#041128] tracking-tight leading-[1.08] m-0">
                 Building ideas. Engineering solutions. Creating impact.
               </h2>
               <p className="mt-5 text-[#3D5574] text-base sm:text-lg leading-relaxed">
@@ -74,13 +79,13 @@ export default async function HomePage() {
               {[
                 {
                   icon: Layers,
-                  title: `${departments.length || 9} Disciplines`,
-                  desc: 'Cross-functional engineering spanning CSE, IT, M.Tech CSE, ECE, EEE, MECH, CIVIL, CHEM, and BME.',
+                  title: `${departments.length || 10} Disciplines`,
+                  desc: 'Cross-functional engineering spanning CSE, IT, M.Tech CSE, ECE, EEE, MECH, CIVIL, CHEM, BME, and GPP.',
                 },
                 {
                   icon: Sparkles,
                   title: 'Hands-on Innovation',
-                  desc: 'Working physical prototypes, algorithmic pipelines, and autonomous systems.',
+                  desc: 'Working physical prototypes, algorithmic pipelines, hardware systems, and multi-disciplinary solutions.',
                 },
                 {
                   icon: ShieldCheck,
@@ -102,7 +107,7 @@ export default async function HomePage() {
                     <div className="w-12 h-12 rounded-2xl bg-[#EDF4FC] text-[#5277A8] flex items-center justify-center mb-5 group-hover:bg-[#041128] group-hover:text-white transition-colors duration-300">
                       <Icon size={22} />
                     </div>
-                    <h3 className="font-normal text-xl text-[#041128] mb-2">
+                    <h3 className="font-semibold text-xl text-[#041128] mb-2">
                       {item.title}
                     </h3>
                     <p className="text-xs sm:text-sm text-[#41516B] leading-relaxed">
@@ -119,7 +124,7 @@ export default async function HomePage() {
                 <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#91A9C9]">
                   STUDENT PROJECT EXHIBITION
                 </span>
-                <h3 className="font-primary font-normal text-2xl sm:text-4xl text-white tracking-tight mt-2">
+                <h3 className="font-normal text-2xl sm:text-4xl text-white tracking-tight mt-2">
                   Discover What SSN Students Are Creating.
                 </h3>
                 <p className="text-sm sm:text-base text-[#FAF9F5]/75 mt-3 leading-relaxed">
@@ -129,15 +134,15 @@ export default async function HomePage() {
 
               <div className="grid grid-cols-3 gap-6 sm:gap-10 shrink-0 text-center">
                 <div>
-                  <div className="font-primary text-3xl sm:text-4xl text-white">
-                    {departments.length > 0 ? departments.length : 9}
+                  <div className="text-3xl sm:text-4xl text-white font-bold">
+                    {departments.length > 0 ? departments.length : 10}
                   </div>
                   <div className="text-[11px] font-semibold text-[#91A9C9] uppercase tracking-wider mt-1">
                     Departments
                   </div>
                 </div>
                 <div>
-                  <div className="font-primary text-3xl sm:text-4xl text-white">
+                  <div className="text-3xl sm:text-4xl text-white font-bold">
                     {normalised.length > 0 ? `${normalised.length}+` : '30+'}
                   </div>
                   <div className="text-[11px] font-semibold text-[#91A9C9] uppercase tracking-wider mt-1">
@@ -145,7 +150,7 @@ export default async function HomePage() {
                   </div>
                 </div>
                 <div>
-                  <div className="font-primary text-3xl sm:text-4xl text-white">100+</div>
+                  <div className="text-3xl sm:text-4xl text-white font-bold">100+</div>
                   <div className="text-[11px] font-semibold text-[#91A9C9] uppercase tracking-wider mt-1">
                     Innovators
                   </div>
@@ -155,10 +160,9 @@ export default async function HomePage() {
           </PageContainer>
         </section>
 
-        {/* ── 4. PROJECTS SECTION (#projects) — DEPARTMENT BY DEPARTMENT MARQUEE ── */}
+        {/* ── 4. PROJECTS SECTION (#projects) ── */}
         <section id="projects" className="py-20 sm:py-28 bg-[#F8F7F3] border-t border-[rgba(4,17,40,0.06)]">
           <PageContainer>
-            {/* Header: Eyebrow + DM Serif Heading */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 sm:mb-16 gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2.5">
@@ -167,7 +171,7 @@ export default async function HomePage() {
                     EXHIBITION SHOWCASE &bull; DEPARTMENT TRACKS
                   </span>
                 </div>
-                <h2 className="font-primary font-normal text-3xl sm:text-4xl lg:text-[44px] text-[#041128] tracking-tight leading-tight m-0">
+                <h2 className="font-normal text-3xl sm:text-4xl lg:text-[44px] text-[#041128] tracking-tight leading-tight m-0">
                   Projects by Department
                 </h2>
                 <p className="mt-2 text-sm sm:text-base text-[#41516B] max-w-xl">

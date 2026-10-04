@@ -8,8 +8,8 @@ import type { Department, Project } from '@/types';
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Explore Projects — BUILD CLUB SSN I FOUND',
-  description: 'Browse all student projects at the SSN I FOUND project exhibition.',
+  title: 'Explore Projects — BUILD CLUB SSN Innovation Day',
+  description: 'Browse all student engineering projects at the SSN Innovation Day project exhibition.',
 };
 
 export default async function ProjectsPage() {
@@ -18,7 +18,11 @@ export default async function ProjectsPage() {
   const [projectsRes, deptsRes] = await Promise.all([
     supabase
       .from('projects')
-      .select(`id, project_id, title, description, project_lead, image_url, department_id, is_active, created_at, updated_at, departments(id, name, code)`)
+      .select(`
+        id, project_id, title, description, project_lead, team_members, project_supervisor, tags, image_url,
+        department_id, is_active, created_at, updated_at,
+        departments(id, name, code, color, accent_color)
+      `)
       .eq('is_active', true)
       .order('project_id', { ascending: true }),
     supabase
@@ -35,11 +39,13 @@ export default async function ProjectsPage() {
 
   const normalised = rawProjects.map((p) => ({
     ...p,
+    team_members: Array.isArray(p.team_members) ? p.team_members : [],
+    tags: Array.isArray(p.tags) ? p.tags : [],
     department: p.departments ?? undefined,
   }));
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF9F5]">
+    <div className="min-h-screen flex flex-col bg-[#FAF9F5] font-primary">
       <Navbar />
 
       <main className="flex-1 pt-[115px] sm:pt-[125px] pb-16">
@@ -49,25 +55,25 @@ export default async function ProjectsPage() {
             <div className="max-w-2xl">
               <div className="flex items-center gap-2 mb-2.5">
                 <div className="w-5 h-[1.5px] bg-[#5277A8]" />
-                <span className="text-[11.5px] font-sans font-semibold uppercase tracking-[0.25em] text-[#5277A8]">
-                  OUR PROJECTS
+                <span className="text-[11.5px] font-semibold uppercase tracking-[0.25em] text-[#5277A8]">
+                  OUR PROJECTS &amp; TEAMS
                 </span>
               </div>
-              <h1 className="font-display font-normal text-4xl sm:text-5xl lg:text-6xl text-[#041128] tracking-tight leading-tight m-0">
+              <h1 className="font-normal text-4xl sm:text-5xl lg:text-6xl text-[#041128] tracking-tight leading-tight m-0">
                 Explore Innovative Projects
               </h1>
-              <p className="mt-3.5 font-sans text-[#3D5574] text-base sm:text-lg leading-relaxed">
-                Discover the creative and technical solutions built by talented students across various engineering departments.
+              <p className="mt-3.5 text-[#3D5574] text-base sm:text-lg leading-relaxed font-normal">
+                Discover the creative and technical solutions built by talented students across various engineering departments and disciplines.
               </p>
             </div>
 
             {/* Right-Side Real Stats */}
             <div className="flex items-center gap-6 sm:gap-10 shrink-0">
               <div>
-                <div className="font-display text-3xl sm:text-4xl text-[#041128]">
+                <div className="text-3xl sm:text-4xl text-[#041128] font-bold">
                   {normalised.length}
                 </div>
-                <div className="text-[11.5px] font-sans font-semibold text-[#848C9B] uppercase tracking-wider mt-0.5">
+                <div className="text-[11.5px] font-semibold text-[#848C9B] uppercase tracking-wider mt-0.5">
                   Total Projects
                 </div>
               </div>
@@ -75,10 +81,10 @@ export default async function ProjectsPage() {
               <div className="w-[1px] h-10 bg-[#D9E1EA]" />
 
               <div>
-                <div className="font-display text-3xl sm:text-4xl text-[#041128]">
+                <div className="text-3xl sm:text-4xl text-[#041128] font-bold">
                   {departments.length}
                 </div>
-                <div className="text-[11.5px] font-sans font-semibold text-[#848C9B] uppercase tracking-wider mt-0.5">
+                <div className="text-[11.5px] font-semibold text-[#848C9B] uppercase tracking-wider mt-0.5">
                   Departments
                 </div>
               </div>
@@ -86,10 +92,10 @@ export default async function ProjectsPage() {
               <div className="w-[1px] h-10 bg-[#D9E1EA]" />
 
               <div>
-                <div className="font-display text-3xl sm:text-4xl text-[#041128]">
+                <div className="text-3xl sm:text-4xl text-[#041128] font-bold">
                   {normalised.length * 3}+
                 </div>
-                <div className="text-[11.5px] font-sans font-semibold text-[#848C9B] uppercase tracking-wider mt-0.5">
+                <div className="text-[11.5px] font-semibold text-[#848C9B] uppercase tracking-wider mt-0.5">
                   Contributors
                 </div>
               </div>

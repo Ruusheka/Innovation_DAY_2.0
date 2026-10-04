@@ -22,12 +22,17 @@ export async function GET(
         title,
         description,
         project_lead,
+        team_members,
+        project_supervisor,
+        tags,
         image_url,
         department_id,
         departments (
           id,
           name,
-          code
+          code,
+          color,
+          accent_color
         )
       `)
       .eq('project_id', id)
@@ -38,7 +43,14 @@ export async function GET(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ data });
+    const normalised = {
+      ...data,
+      team_members: Array.isArray(data.team_members) ? data.team_members : [],
+      tags: Array.isArray(data.tags) ? data.tags : [],
+      department: (data as any).departments ?? (data as any).department ?? undefined,
+    };
+
+    return NextResponse.json({ data: normalised });
   } catch (err) {
     console.error('[public/projects/[id]] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -8,6 +8,8 @@ export interface Department {
   id: string;
   name: string;
   code: string;
+  color?: string | null;
+  accent_color?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -20,11 +22,15 @@ export interface Project {
   title: string;
   description: string | null;
   project_lead: string;
+  team_members?: string[] | null;
+  project_supervisor?: string | null;
+  tags?: string[] | null;
   image_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
   department?: Department;
+  departments?: Department;
 }
 
 export interface Student {
@@ -54,6 +60,7 @@ export interface Vote {
   student_id: string;
   student_name: string;
   student_department: string | null;
+  department_id?: string | null;
   project_id: string;
   project_department: string | null;
   voted_by: string | null;
@@ -88,9 +95,15 @@ export interface LeaderboardRow {
   project_id: string;
   title: string;
   project_lead: string;
+  team_members?: string[] | null;
+  project_supervisor?: string | null;
+  tags?: string[] | null;
+  image_url?: string | null;
   department_uuid: string;
   department_name: string;
   department_code: string;
+  department_color?: string | null;
+  department_accent_color?: string | null;
   vote_count: number;
   dept_rank: number;
   overall_rank: number;
@@ -122,6 +135,9 @@ export interface ProjectFormData {
   title: string;
   description: string;
   project_lead: string;
+  team_members?: string[];
+  project_supervisor?: string;
+  tags?: string[];
   image_url?: string;
   is_active: boolean;
 }

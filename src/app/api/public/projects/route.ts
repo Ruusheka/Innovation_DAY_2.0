@@ -21,12 +21,17 @@ export async function GET(request: NextRequest) {
         title,
         description,
         project_lead,
+        team_members,
+        project_supervisor,
+        tags,
         image_url,
         department_id,
         departments (
           id,
           name,
-          code
+          code,
+          color,
+          accent_color
         )
       `)
       .eq('is_active', true)
@@ -45,6 +50,8 @@ export async function GET(request: NextRequest) {
 
     const normalised = (data ?? []).map((p: any) => ({
       ...p,
+      team_members: Array.isArray(p.team_members) ? p.team_members : [],
+      tags: Array.isArray(p.tags) ? p.tags : [],
       department: p.departments ?? p.department ?? undefined,
     }));
 

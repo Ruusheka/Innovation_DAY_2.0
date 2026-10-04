@@ -20,29 +20,50 @@ export default async function AdminLeaderboardPage() {
 
   const supabase = createServiceClient();
 
-  // Fetch leaderboard, departments, total votes, and project thumbnails in parallel
+  // Fetch departments, total votes, and projects in parallel
   const [leaderboardRes, deptsRes, totalRes, projectsRes] = await Promise.all([
     supabase.from('leaderboard').select('*'),
     supabase.from('departments').select('*').eq('is_active', true).order('code'),
     supabase.from('votes').select('id', { count: 'exact', head: true }),
-    supabase.from('projects').select('id, project_id, image_url'),
+    supabase.from('projects').select('id, project_id, image_url, team_members, project_supervisor, tags'),
   ]);
 
   const rawLeaderboard = (leaderboardRes.data ?? []) as LeaderboardRow[];
   const departments = (deptsRes.data ?? []) as Department[];
   const totalVotes = totalRes.count ?? 0;
-  const projectImages = new Map<string, string>();
+
+  const projectMetaMap = new Map<string, { image_url?: string; team_members?: string[]; project_supervisor?: string | null; tags?: string[] }>();
   (projectsRes.data ?? []).forEach((p: any) => {
-    if (p.image_url) {
-      projectImages.set(p.id, p.image_url);
-      projectImages.set(p.project_id, p.image_url);
-    }
+    projectMetaMap.set(p.id, {
+      image_url: p.image_url || undefined,
+      team_members: p.team_members || [],
+      project_supervisor: p.project_supervisor || null,
+      tags: p.tags || [],
+    });
+    projectMetaMap.set(p.project_id, {
+      image_url: p.image_url || undefined,
+      team_members: p.team_members || [],
+      project_supervisor: p.project_supervisor || null,
+      tags: p.tags || [],
+    });
   });
 
-  const enrichedLeaderboard = rawLeaderboard.map((row) => ({
-    ...row,
-    image_url: projectImages.get(row.project_uuid) || projectImages.get(row.project_id) || undefined,
-  }));
+  const enrichedLeaderboard: LeaderboardRow[] = rawLeaderboard.map((row) => {
+    const meta = projectMetaMap.get(row.project_uuid) || projectMetaMap.get(row.project_id);
+    return {
+      ...row,
+      image_url: row.image_url || meta?.image_url || undefined,
+      team_members: row.team_members || meta?.team_members || [],
+      project_supervisor: row.project_supervisor || meta?.project_supervisor || null,
+      tags: row.tags || meta?.tags || [],
+    };
+  });
+
+  // Sort deterministically: vote_count DESC, project_id ASC
+  enrichedLeaderboard.sort((a, b) => {
+    if (b.vote_count !== a.vote_count) return b.vote_count - a.vote_count;
+    return a.project_id.localeCompare(b.project_id, undefined, { numeric: true });
+  });
 
   return (
     <div className="font-primary">
@@ -51,7 +72,7 @@ export default async function AdminLeaderboardPage() {
           PROJECT LEADERBOARD
         </h1>
         <p className="text-[#5277A8] text-sm sm:text-base mt-2 font-normal">
-          Current voting standings
+          Current exhibition voting standings &amp; podium tally
         </p>
       </div>
 

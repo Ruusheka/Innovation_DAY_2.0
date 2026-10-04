@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, Check, AlertCircle, CheckCircle2, ShieldCheck, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils/cn';
@@ -25,7 +25,7 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
 
   // Step 3: Project Selection
   const [allProjects, setAllProjects] = useState<Project[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [loadingProjects, setLoadingProjects] = useState(true);
   const [projectDepartment, setProjectDepartment] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
 
@@ -33,8 +33,8 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Departments fetched live from DB (includes MTech CSE and all 7 departments automatically)
-  const [dbDepartments, setDbDepartments] = useState<string[]>([]);
+  // Departments fetched live from DB (includes GPP, MTech CSE and all active departments)
+  const [dbDepartments, setDbDepartments] = useState<Department[]>([]);
 
   const studentIdInputRef = useRef<HTMLInputElement>(null);
   const studentNameInputRef = useRef<HTMLInputElement>(null);
@@ -44,46 +44,56 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
     studentIdInputRef.current?.focus();
   }, []);
 
-  // Fetch all active projects on mount
+  // Fetch all active projects and departments on mount
   useEffect(() => {
-    setLoadingProjects(true);
-    fetch('/api/public/projects')
-      .then((r) => r.json())
-      .then((json) => setAllProjects(json.data ?? []))
-      .catch(() => toast.error('Failed to load exhibition projects.'))
-      .finally(() => setLoadingProjects(false));
-  }, []);
+    let isMounted = true;
 
-  // Fetch departments from DB — so MTech CSE and any future department is always present
-  useEffect(() => {
-    fetch('/api/public/departments')
-      .then((r) => r.json())
-      .then((json) => {
-        const codes: string[] = (json.data ?? [])
-          .map((d: any) => (d.code || '').trim().toUpperCase())
-          .filter(Boolean);
-        setDbDepartments(codes);
+    Promise.all([
+      fetch('/api/public/projects').then((r) => r.json()),
+      fetch('/api/public/departments').then((r) => r.json()),
+    ])
+      .then(([projectsJson, deptsJson]) => {
+        if (!isMounted) return;
+        setAllProjects(projectsJson.data ?? []);
+        setDbDepartments(deptsJson.data ?? []);
       })
-      .catch(() => {/* silently fall back to project-derived codes */});
+      .catch(() => {
+        if (isMounted) toast.error('Failed to load exhibition data.');
+      })
+      .finally(() => {
+        if (isMounted) setLoadingProjects(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Merge DB departments + any extra codes found in loaded projects — always complete, always sorted
+  // Dynamic department options list
   const availableDepts = Array.from(
     new Set([
-      ...dbDepartments,
+      ...dbDepartments.map((d) => (d.code || '').trim().toUpperCase()),
       ...allProjects
-        .map((p: any) => (p.department?.code || p.departments?.code || '').trim().toUpperCase())
+        .map((p) => (p.department?.code || p.departments?.code || '').trim().toUpperCase())
         .filter(Boolean),
     ])
-  ).sort();
+  ).filter(Boolean).sort();
 
   // Filter projects by selected project department
-  const filteredProjects = allProjects.filter((p: any) => {
+  const filteredProjects = allProjects.filter((p) => {
     if (!projectDepartment) return false;
     const target = projectDepartment.trim().toUpperCase();
     const deptCode = (p.department?.code || p.departments?.code || '')?.trim().toUpperCase();
     const deptName = (p.department?.name || p.departments?.name || '')?.trim().toUpperCase();
-    return deptCode === target || deptName === target || deptName.includes(target);
+    const deptId = p.department_id || p.department?.id || p.departments?.id;
+    const matchedDept = dbDepartments.find((d) => d.code.toUpperCase() === target);
+
+    return (
+      deptCode === target ||
+      deptName === target ||
+      deptName.includes(target) ||
+      (matchedDept && deptId === matchedDept.id)
+    );
   });
 
   // Handle Check ID

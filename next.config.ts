@@ -2,12 +2,25 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
-        // Supabase Storage — project images bucket
+        protocol: 'https',
+        hostname: 'fztknruzfsnabbncjcpu.supabase.co',
+        pathname: '/**',
+      },
+      {
         protocol: 'https',
         hostname: '*.supabase.co',
-        pathname: '/storage/v1/object/public/**',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
       },
     ],
   },
@@ -21,7 +34,7 @@ const nextConfig: NextConfig = {
           // Prevent clickjacking
           { key: 'X-Frame-Options', value: 'DENY' },
           // Prevent MIME-type sniffing
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Type-Options', value: 'nosniff' },
           // Limit referrer information
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           // Enforce HTTPS for 1 year (preload + subdomains)
@@ -35,22 +48,15 @@ const nextConfig: NextConfig = {
             value: 'camera=(), microphone=(), geolocation=()',
           },
           // Content Security Policy
-          // - default-src 'self': blocks unknown origins by default
-          // - script-src: allows Next.js inline scripts + Supabase
-          // - style-src: allows Tailwind inline styles
-          // - img-src: allows Supabase Storage images + data URIs
-          // - connect-src: allows Supabase API + realtime websocket
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              // Allow inline styles (Tailwind) + Google Fonts stylesheet
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https://*.supabase.co",
-              // Allow local fonts + Google Fonts static files (woff2 etc.)
+              "img-src 'self' data: blob: https: http:",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+              "connect-src 'self' https: wss: ws:",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

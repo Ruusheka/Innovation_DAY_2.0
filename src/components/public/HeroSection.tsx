@@ -1440,6 +1440,7 @@ export function HeroSection() {
                         src={currentSlide.src}
                         alt={currentSlide.alt}
                         fill
+                        unoptimized
                         priority={slideIndex === 0}
                         sizes="
                           (max-width: 768px) 94vw,

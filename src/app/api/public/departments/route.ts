@@ -11,7 +11,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('departments')
-      .select('id, name, code')
+      .select('id, name, code, color, accent_color')
       .eq('is_active', true)
       .order('code', { ascending: true });
 

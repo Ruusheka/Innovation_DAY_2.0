@@ -8,7 +8,7 @@ export const projectSchema = z.object({
     .string()
     .min(1, 'Project ID is required')
     .max(20, 'Project ID is too long')
-    .regex(/^[A-Z0-9-_]+$/, 'Project ID must be uppercase letters, numbers, hyphens, or underscores')
+    .regex(/^[A-Za-z0-9-_]+$/, 'Project ID must be alphanumeric letters, numbers, hyphens, or underscores')
     .trim(),
   department_id: z
     .string()
@@ -28,6 +28,17 @@ export const projectSchema = z.object({
     .min(2, 'Project lead name is required')
     .max(100, 'Name is too long')
     .trim(),
+  team_members: z
+    .array(z.string().trim().min(1, 'Team member name cannot be empty'))
+    .default([]),
+  project_supervisor: z
+    .string()
+    .max(100, 'Supervisor name is too long')
+    .optional()
+    .or(z.literal('')),
+  tags: z
+    .array(z.string().trim().min(1, 'Tag cannot be empty'))
+    .default([]),
   image_url: z
     .string()
     .url('Invalid image URL')

@@ -6,7 +6,7 @@ import { projectSchema } from '@/lib/validations/project';
 
 // ============================================================
 // PATCH /api/admin/projects/[id]
-// Update a project
+// Update a project (including team members, supervisor, tags)
 // ============================================================
 export async function PATCH(
   request: NextRequest,
@@ -36,12 +36,19 @@ export async function PATCH(
     const { data, error } = await supabase
       .from('projects')
       .update({
-        ...parseResult.data,
-        description: parseResult.data.description || null,
-        image_url: parseResult.data.image_url || null,
+        project_id: parseResult.data.project_id.trim().toUpperCase(),
+        department_id: parseResult.data.department_id,
+        title: parseResult.data.title.trim(),
+        description: parseResult.data.description?.trim() || null,
+        project_lead: parseResult.data.project_lead.trim(),
+        team_members: parseResult.data.team_members ?? [],
+        project_supervisor: parseResult.data.project_supervisor?.trim() || null,
+        tags: parseResult.data.tags ?? [],
+        image_url: parseResult.data.image_url?.trim() || null,
+        is_active: parseResult.data.is_active,
       })
       .eq('id', id)
-      .select(`*, departments(id, name, code)`)
+      .select(`*, departments(id, name, code, color, accent_color)`)
       .single();
 
     if (error) {

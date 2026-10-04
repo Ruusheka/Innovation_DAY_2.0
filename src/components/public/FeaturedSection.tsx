@@ -2,8 +2,8 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ArrowRight, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { ProjectImage } from '@/components/ui/ProjectImage';
 import { PageContainer } from '@/components/ui/PageContainer';
 import type { Project, Department } from '@/types';
 
@@ -87,24 +87,15 @@ export function FeaturedSection({ projects }: FeaturedSectionProps) {
                 <div className="card-white rounded-[20px] overflow-hidden bg-white flex flex-col h-full">
                   {/* Dominant Image Aspect Ratio 16:10 */}
                   <div className="relative w-full aspect-[16/10] bg-[#EDF4FC] overflow-hidden">
-                    {project.image_url ? (
-                      <Image
-                        src={project.image_url}
-                        alt={project.title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                        sizes="350px"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#EDF4FC] via-[#F5F8FC] to-[#DDE7F3] p-6 text-center">
-                        <span className="text-[#5277A8] font-mono font-bold text-3xl">
-                          {project.project_id}
-                        </span>
-                        <span className="text-xs font-sans text-[#848C9B] mt-1 font-medium">
-                          {project.department?.name ?? 'SSN Engineering'}
-                        </span>
-                      </div>
-                    )}
+                    <ProjectImage
+                      src={project.image_url}
+                      alt={project.title}
+                      deptCode={project.department?.code}
+                      deptName={project.department?.name}
+                      projectId={project.project_id}
+                      imageClassName="transition-transform duration-500 group-hover:scale-[1.03]"
+                      sizes="350px"
+                    />
 
                     <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-[#041128]/85 backdrop-blur-md text-white font-mono text-[11px] font-semibold">
                       {project.project_id}

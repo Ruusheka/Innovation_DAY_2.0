@@ -1,586 +1,2468 @@
+// // 'use client';
+
+// // import React, { useEffect, useRef, useCallback, useState } from 'react';
+// // import Link from 'next/link';
+// // import { ArrowRight, User, Users, GraduationCap, Sparkles } from 'lucide-react';
+// // import { ProjectImage } from '@/components/ui/ProjectImage';
+// // import { getDepartmentMeta } from '@/lib/utils/departmentColors';
+// // import { cn } from '@/lib/utils/cn';
+// // import type { Department, Project } from '@/types';
+
+// // interface DepartmentMarqueeProps {
+// //   projects: Array<Project & { department?: Department; departments?: Department }>;
+// //   departments: Department[];
+// // }
+
+// // // Preferred presentation order for exhibition departments (includes GPP)
+// // const PREFERRED_ORDER = [
+// //   'CSE',
+// //   'IT',
+// //   // 'MTECHCSE',
+// //   // 'M.TECH CSE',
+// //   'ECE',
+// //   'EEE',
+// //   'MECH',
+// //   'CIVIL',
+// //   'CHEM',
+// //   'BME',
+// //   'GPP',
+// // ];
+
+// // function formatDeptCode(code: string): string {
+// //   const c = code.trim().toUpperCase();
+// //   if (c === 'MTECHCSE' || c === 'MTECH-CSE' || c === 'MTECH_CSE') {
+// //     return 'M.TECH CSE';
+// //   }
+// //   return c;
+// // }
+
+// // export function DepartmentMarquee({ projects, departments }: DepartmentMarqueeProps) {
+// //   // Sort departments dynamically from database according to standard exhibition presentation order
+// //   const sortedDepts = [...departments].sort((a, b) => {
+// //     const codeA = a.code?.toUpperCase().replace(/[^A-Z]/g, '') || '';
+// //     const codeB = b.code?.toUpperCase().replace(/[^A-Z]/g, '') || '';
+// //     const idxA = PREFERRED_ORDER.findIndex((p) => p.replace(/[^A-Z]/g, '') === codeA);
+// //     const idxB = PREFERRED_ORDER.findIndex((p) => p.replace(/[^A-Z]/g, '') === codeB);
+// //     if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+// //     if (idxA !== -1) return -1;
+// //     if (idxB !== -1) return 1;
+// //     return a.name.localeCompare(b.name);
+// //   });
+
+// //   return (
+// //     <div className="space-y-12 sm:space-y-16 w-full max-w-[100vw] overflow-x-clip select-none font-primary">
+// //       {sortedDepts.map((dept, rowIndex) => {
+// //         // STRICT DATABASE ID MATCHING: project.department_id === dept.id
+// //         const deptProjects = projects.filter((project) => {
+// //           const pDeptId =
+// //             project.department_id ||
+// //             project.departments?.id ||
+// //             project.department?.id;
+// //           return pDeptId === dept.id;
+// //         });
+
+// //         const isLtr = rowIndex % 2 === 0;
+
+// //         return (
+// //           <DepartmentWaveSection
+// //             key={dept.id}
+// //             department={dept}
+// //             projects={deptProjects}
+// //             isLtr={isLtr}
+// //           />
+// //         );
+// //       })}
+// //     </div>
+// //   );
+// // }
+
+// // // ── DEPARTMENT WAVE SECTION WITH CONTINUOUS TRAVELLING SINE WAVE ──
+// // interface DepartmentWaveSectionProps {
+// //   department: Department;
+// //   projects: Array<Project & { department?: Department }>;
+// //   isLtr: boolean;
+// // }
+
+// // function DepartmentWaveSection({
+// //   department,
+// //   projects,
+// //   isLtr,
+// // }: DepartmentWaveSectionProps) {
+// //   const deptCode = formatDeptCode(department.code || '');
+// //   const deptName = department.name || deptCode;
+// //   const deptMeta = getDepartmentMeta(deptCode);
+
+// //   const trackRef = useRef<HTMLDivElement>(null);
+// //   const cardElementsRef = useRef<HTMLElement[]>([]);
+// //   const offsetRef = useRef(0);
+// //   const singleSetWidthRef = useRef(0);
+// //   const amplitudeRef = useRef(140);
+// //   const speedRef = useRef(0.85);
+
+// //   const isHovered = useRef(false);
+// //   const isDownRef = useRef(false);
+// //   const isDragging = useRef(false);
+// //   const dragStartX = useRef(0);
+// //   const dragStartY = useRef(0);
+// //   const dragStartOffset = useRef(0);
+// //   const dragDistanceX = useRef(0);
+// //   const hasDraggedRecently = useRef(false);
+
+// //   const loopCount = Math.max(4, Math.ceil(14 / (projects.length || 1)));
+// //   const direction = isLtr ? -1 : 1;
+
+// //   const updateResponsiveDimensions = useCallback(() => {
+// //     if (typeof window === 'undefined') return;
+// //     const w = window.innerWidth;
+// //     if (w >= 1024) {
+// //       amplitudeRef.current = 140;
+// //       speedRef.current = 0.85;
+// //     } else if (w >= 768) {
+// //       amplitudeRef.current = 90;
+// //       speedRef.current = 0.65;
+// //     } else {
+// //       amplitudeRef.current = 50;
+// //       speedRef.current = 0.50;
+// //     }
+// //   }, []);
+
+// //   const measure = useCallback(() => {
+// //     if (!trackRef.current) return;
+// //     updateResponsiveDimensions();
+// //     const totalScrollWidth = trackRef.current.scrollWidth;
+// //     if (totalScrollWidth > 0) {
+// //       const setWidth = totalScrollWidth / loopCount;
+// //       singleSetWidthRef.current = setWidth;
+// //       cardElementsRef.current = Array.from(trackRef.current.children) as HTMLElement[];
+
+// //       if (direction === 1 && offsetRef.current === 0) {
+// //         offsetRef.current = -setWidth;
+// //       }
+// //     }
+// //   }, [loopCount, direction, updateResponsiveDimensions]);
+
+// //   const applyTransforms = useCallback(() => {
+// //     if (!trackRef.current || singleSetWidthRef.current <= 0) return;
+
+// //     trackRef.current.style.transform = `translate3d(${offsetRef.current.toFixed(2)}px, 0, 0)`;
+
+// //     const singleSet = singleSetWidthRef.current;
+// //     const cardPitch = singleSet / (projects.length || 1);
+// //     const wavelength = cardPitch * 2;
+// //     const amplitude = amplitudeRef.current;
+// //     const cards = cardElementsRef.current;
+
+// //     for (let i = 0; i < cards.length; i++) {
+// //       const cardEl = cards[i];
+// //       if (!cardEl) continue;
+// //       const cardX = offsetRef.current + i * cardPitch;
+// //       const phase = (cardX / wavelength) * 2 * Math.PI;
+// //       const y = (amplitude / 2) * (1 - Math.cos(phase));
+// //       cardEl.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`;
+// //     }
+// //   }, [projects.length]);
+
+// //   useEffect(() => {
+// //     if (projects.length < 4) return;
+
+// //     measure();
+// //     const handleResize = () => {
+// //       measure();
+// //       applyTransforms();
+// //     };
+// //     window.addEventListener('resize', handleResize, { passive: true });
+
+// //     const prefersReducedMotion =
+// //       typeof window !== 'undefined' &&
+// //       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// //     if (prefersReducedMotion) {
+// //       applyTransforms();
+// //       return () => {
+// //         window.removeEventListener('resize', handleResize);
+// //       };
+// //     }
+
+// //     let isVisible = true;
+// //     let observer: IntersectionObserver | null = null;
+// //     if (typeof IntersectionObserver !== 'undefined' && trackRef.current) {
+// //       observer = new IntersectionObserver(
+// //         (entries) => {
+// //           for (const entry of entries) {
+// //             isVisible = entry.isIntersecting;
+// //           }
+// //         },
+// //         { rootMargin: '250px 0px' }
+// //       );
+// //       observer.observe(trackRef.current);
+// //     }
+
+// //     let animationFrameId: number;
+
+// //     const animate = () => {
+// //       const singleSet = singleSetWidthRef.current;
+// //       if (isVisible && !isDragging.current && !isDownRef.current && singleSet > 0) {
+// //         const currentSpeed = isHovered.current ? speedRef.current * 0.25 : speedRef.current;
+// //         offsetRef.current += currentSpeed * direction;
+
+// //         if (direction === -1) {
+// //           if (offsetRef.current <= -singleSet) {
+// //             offsetRef.current += singleSet;
+// //           }
+// //         } else {
+// //           if (offsetRef.current >= 0) {
+// //             offsetRef.current -= singleSet;
+// //           }
+// //         }
+
+// //         applyTransforms();
+// //       }
+
+// //       animationFrameId = requestAnimationFrame(animate);
+// //     };
+
+// //     animationFrameId = requestAnimationFrame(animate);
+
+// //     return () => {
+// //       cancelAnimationFrame(animationFrameId);
+// //       window.removeEventListener('resize', handleResize);
+// //       if (observer) {
+// //         observer.disconnect();
+// //       }
+// //     };
+// //   }, [projects.length, direction, measure, applyTransforms]);
+
+// //   const handlePointerDown = (e: React.PointerEvent) => {
+// //     if (e.button !== 0 && e.pointerType === 'mouse') return;
+// //     isDownRef.current = true;
+// //     dragStartX.current = e.clientX;
+// //     dragStartY.current = e.clientY;
+// //     dragStartOffset.current = offsetRef.current;
+// //     dragDistanceX.current = 0;
+// //     isDragging.current = false;
+// //   };
+
+// //   const handlePointerMove = (e: React.PointerEvent) => {
+// //     if (!isDownRef.current) return;
+// //     const deltaX = e.clientX - dragStartX.current;
+// //     const deltaY = e.clientY - dragStartY.current;
+// //     const absX = Math.abs(deltaX);
+// //     const absY = Math.abs(deltaY);
+
+// //     if (!isDragging.current) {
+// //       if (absY > 8 && absY > absX * 1.1) {
+// //         isDownRef.current = false;
+// //         return;
+// //       }
+// //       if (absX > 8 && absX > absY) {
+// //         isDragging.current = true;
+// //         dragStartOffset.current = offsetRef.current;
+// //         dragStartX.current = e.clientX;
+// //         try {
+// //           (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+// //         } catch {}
+// //       }
+// //     }
+
+// //     if (isDragging.current) {
+// //       dragDistanceX.current = Math.abs(e.clientX - dragStartX.current);
+// //       const singleSet = singleSetWidthRef.current;
+// //       if (singleSet > 0) {
+// //         let newOffset = dragStartOffset.current + (e.clientX - dragStartX.current);
+
+// //         while (newOffset <= -singleSet * (loopCount - 1)) newOffset += singleSet;
+// //         while (newOffset > 0) newOffset -= singleSet;
+
+// //         offsetRef.current = newOffset;
+// //         applyTransforms();
+// //       }
+// //     }
+// //   };
+
+// //   const handlePointerUp = (e: React.PointerEvent) => {
+// //     if (e.pointerType === 'touch') {
+// //       isHovered.current = false;
+// //     }
+// //     if (!isDownRef.current) return;
+// //     isDownRef.current = false;
+
+// //     if (isDragging.current) {
+// //       isDragging.current = false;
+// //       if (dragDistanceX.current > 6) {
+// //         hasDraggedRecently.current = true;
+// //         setTimeout(() => {
+// //           hasDraggedRecently.current = false;
+// //         }, 150);
+// //       }
+// //     }
+
+// //     try {
+// //       if ((e.currentTarget as HTMLElement).hasPointerCapture?.(e.pointerId)) {
+// //         (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+// //       }
+// //     } catch {}
+// //   };
+
+// //   return (
+// //     <div className="relative w-full">
+// //       {/* ── 1. CENTERED DEPARTMENT HEADING WITH DYNAMIC COLOR ACCENT ── */}
+// //       <div className="flex items-center justify-center gap-3 sm:gap-6 mb-3 sm:mb-4 max-w-4xl mx-auto px-4 select-none">
+// //         <div
+// //           className="flex-1 h-[2px] rounded-full"
+// //           style={{
+// //             background: `linear-gradient(90deg, transparent, ${deptMeta.primary})`,
+// //           }}
+// //         />
+// //         <div className="text-center shrink-0">
+// //           <div className="font-primary text-2xl sm:text-3xl lg:text-[38px] text-[#041128] tracking-widest font-normal uppercase leading-tight">
+// //             {deptCode}
+// //           </div>
+// //           <div className="text-xs sm:text-[13px] font-primary text-[#5277A8] tracking-wider mt-0.5 font-normal">
+// //             {deptName}
+// //           </div>
+// //         </div>
+// //         <div
+// //           className="flex-1 h-[2px] rounded-full"
+// //           style={{
+// //             background: `linear-gradient(90deg, ${deptMeta.primary}, transparent)`,
+// //           }}
+// //         />
+// //       </div>
+
+// //       {/* ── 2. PROJECT WAVE TRACK / CASES ── */}
+// //       {projects.length === 0 ? (
+// //         <div className="max-w-[620px] mx-auto px-5 text-center pt-2 pb-8">
+// //           <div className="rounded-[26px] bg-white/70 backdrop-blur-[18px] border border-white/80 p-8 sm:p-10 shadow-[0_10px_35px_rgba(4,17,40,0.06)]">
+// //             <div className="w-12 h-12 rounded-full bg-[#EDF4FC] text-[#5277A8] flex items-center justify-center mx-auto mb-3.5">
+// //               <Sparkles size={20} />
+// //             </div>
+// //             <h4 className="font-primary text-xl text-[#041128] font-normal">
+// //               No projects registered yet.
+// //             </h4>
+// //             <p className="font-primary text-xs sm:text-sm text-[#41516B] mt-2 leading-relaxed font-normal">
+// //               Student engineering prototypes for {deptName} are currently in preparation.
+// //             </p>
+// //           </div>
+// //         </div>
+// //       ) : projects.length === 1 ? (
+// //         <div className="max-w-[380px] mx-auto px-4 pt-2 pb-8 flex justify-center">
+// //           <WaveProjectCard
+// //             project={projects[0]}
+// //             deptCode={deptCode}
+// //           />
+// //         </div>
+// //       ) : projects.length === 2 ? (
+// //         <div className="max-w-[850px] mx-auto px-4 pt-2 pb-44 lg:pb-52 flex flex-col sm:flex-row items-start justify-center gap-8 sm:gap-12">
+// //           <div className="translate-y-0">
+// //             <WaveProjectCard
+// //               project={projects[0]}
+// //               deptCode={deptCode}
+// //             />
+// //           </div>
+// //           <div className="translate-y-[50px] lg:translate-y-[130px]">
+// //             <WaveProjectCard
+// //               project={projects[1]}
+// //               deptCode={deptCode}
+// //             />
+// //           </div>
+// //         </div>
+// //       ) : projects.length === 3 ? (
+// //         <div className="max-w-[1240px] mx-auto px-4 pt-2 pb-44 lg:pb-52 flex flex-col lg:flex-row items-start justify-center gap-6 sm:gap-8">
+// //           <div className="translate-y-0">
+// //             <WaveProjectCard
+// //               project={projects[0]}
+// //               deptCode={deptCode}
+// //             />
+// //           </div>
+// //           <div className="translate-y-[50px] lg:translate-y-[130px]">
+// //             <WaveProjectCard
+// //               project={projects[1]}
+// //               deptCode={deptCode}
+// //             />
+// //           </div>
+// //           <div className="translate-y-0">
+// //             <WaveProjectCard
+// //               project={projects[2]}
+// //               deptCode={deptCode}
+// //             />
+// //           </div>
+// //         </div>
+// //       ) : (
+// //         <div
+// //           className="group/track relative w-full overflow-hidden pt-2 pb-44 lg:pb-52 touch-pan-y cursor-grab active:cursor-grabbing"
+// //           onPointerDown={handlePointerDown}
+// //           onPointerMove={handlePointerMove}
+// //           onPointerUp={handlePointerUp}
+// //           onPointerCancel={handlePointerUp}
+// //           onMouseEnter={() => {
+// //             isHovered.current = true;
+// //           }}
+// //           onMouseLeave={() => {
+// //             isHovered.current = false;
+// //           }}
+// //         >
+// //           {/* Lateral Translucent Edge Scrims */}
+// //           <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-28 bg-gradient-to-r from-[#F8F7F3] via-[#F8F7F3]/80 to-transparent z-20" />
+// //           <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-28 bg-gradient-to-l from-[#F8F7F3] via-[#F8F7F3]/80 to-transparent z-20" />
+
+// //           {/* Marquee Viewport & Track Container */}
+// //           <div className="w-full overflow-visible">
+// //             <div
+// //               ref={trackRef}
+// //               className="flex items-start will-change-transform select-none"
+// //             >
+// //               {Array.from({ length: loopCount }).flatMap((_, loopIdx) =>
+// //                 projects.map((project, itemIdx) => {
+// //                   const globalIdx = loopIdx * projects.length + itemIdx;
+
+// //                   return (
+// //                     <div
+// //                       key={`${project.id}-${globalIdx}`}
+// //                       className="px-2.5 sm:px-3.5 shrink-0 will-change-transform"
+// //                     >
+// //                       <WaveProjectCard
+// //                         project={project}
+// //                         deptCode={deptCode}
+// //                         hasDraggedRecently={hasDraggedRecently}
+// //                       />
+// //                     </div>
+// //                   );
+// //                 })
+// //               )}
+// //             </div>
+// //           </div>
+// //         </div>
+// //       )}
+// //     </div>
+// //   );
+// // }
+
+// // // ── LARGE IMAGE-DOMINANT WAVE PROJECT CARD ──
+// // function WaveProjectCard({
+// //   project,
+// //   deptCode,
+// //   hasDraggedRecently,
+// // }: {
+// //   project: Project & { department?: Department };
+// //   deptCode: string;
+// //   hasDraggedRecently?: React.MutableRefObject<boolean>;
+// // }) {
+// //   const deptMeta = getDepartmentMeta(deptCode);
+
+// //   const teamMembers = Array.isArray(project.team_members) ? project.team_members.filter(Boolean) : [];
+// //   const tags = Array.isArray(project.tags) ? project.tags.filter(Boolean) : [];
+// //   const supervisor = project.project_supervisor;
+
+// //   const handleClick = (e: React.MouseEvent) => {
+// //     if (hasDraggedRecently?.current) {
+// //       e.preventDefault();
+// //       e.stopPropagation();
+// //     }
+// //   };
+
+// //   return (
+// //     <Link
+// //       href={`/projects/${project.project_id}`}
+// //       onClick={handleClick}
+// //       draggable={false}
+// //       className="group/card block w-[290px] sm:w-[320px] md:w-[340px] lg:w-[360px] shrink-0 focus:outline-none select-none relative z-10 hover:z-30 transition-transform duration-300 touch-pan-y"
+// //     >
+// //       <div
+// //         className={cn(
+// //           'relative rounded-[26px] bg-white/95 backdrop-blur-[18px] border border-white/95 p-4 sm:p-5 touch-pan-y overflow-hidden',
+// //           'shadow-[0_15px_45px_rgba(4,17,40,0.08)] hover:shadow-[0_24px_55px_rgba(4,17,40,0.16)]',
+// //           'hover:border-[#91A9C9] hover:bg-white',
+// //           'transition-all duration-300 ease-out transform',
+// //           'hover:scale-[1.03]'
+// //         )}
+// //       >
+// //         {/* Department Top Line */}
+// //         <div
+// //           className="absolute top-0 left-0 right-0 h-1"
+// //           style={{ background: `linear-gradient(90deg, ${deptMeta.primary}, ${deptMeta.secondary})` }}
+// //         />
+
+// //         {/* 1. Large Project Image */}
+// //         <div className="relative w-full aspect-[16/11] rounded-[20px] overflow-hidden bg-[#FAF9F5] mb-3.5 border border-[rgba(4,17,40,0.06)] shadow-xs pointer-events-none mt-1">
+// //           <ProjectImage
+// //             src={project.image_url}
+// //             alt={`${project.title} - Build Club Innovation Day exhibition project`}
+// //             deptCode={deptCode}
+// //             deptName={project.department?.name}
+// //             projectId={project.project_id}
+// //             sizes="(max-width: 640px) 290px, 360px"
+// //             imageClassName="transition-transform duration-700 ease-out group-hover/card:scale-[1.06] pointer-events-none"
+// //           />
+
+// //           <div className="absolute inset-0 bg-gradient-to-t from-[#041128]/70 via-[#041128]/15 to-transparent pointer-events-none" />
+
+// //           {/* Department / Project ID Pill Top-Right */}
+// //           <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-[#041128]/85 backdrop-blur-md text-white font-primary text-[11px] font-normal tracking-wider shadow-sm">
+// //             {project.project_id}
+// //           </div>
+// //         </div>
+
+// //         {/* 2. Card Information */}
+// //         <div className="space-y-2">
+// //           {/* Department Code Eyebrow */}
+// //           <div className="flex items-center justify-between text-[10.5px] font-primary uppercase tracking-[0.2em] font-normal">
+// //             <span style={{ color: deptMeta.primary }} className="font-semibold">
+// //               {deptCode} &bull; EXHIBITION
+// //             </span>
+// //             {tags.length > 0 && (
+// //               <span className="text-[10px] text-[#848C9B] lowercase tracking-normal">
+// //                 #{tags[0]}
+// //               </span>
+// //             )}
+// //           </div>
+
+// //           {/* Project Title */}
+// //           <h4 className="font-primary font-normal text-lg sm:text-[20px] text-[#041128] leading-tight line-clamp-1 group-hover/card:text-[#0b1e42] transition-colors">
+// //             {project.title}
+// //           </h4>
+
+// //           {/* Team Lead & Supervisor */}
+// //           <div className="space-y-1 text-xs font-primary pt-1 border-t border-[rgba(4,17,40,0.06)]">
+// //             <div className="flex items-center gap-1.5 truncate">
+// //               <User size={12} className="text-[#5277A8] shrink-0" />
+// //               <span className="text-[#848C9B] font-medium">Lead:</span>
+// //               <span className="text-[#041128] font-semibold truncate">
+// //                 {project.project_lead}
+// //               </span>
+// //             </div>
+
+// //             {teamMembers.length > 0 && (
+// //               <div className="flex items-center gap-1.5 truncate text-[#41516B]">
+// //                 <Users size={12} className="text-[#5277A8] shrink-0" />
+// //                 <span className="text-[#848C9B] font-medium">Team:</span>
+// //                 <span className="text-[#041128] truncate">
+// //                   {teamMembers.slice(0, 2).join(' · ')}
+// //                   {teamMembers.length > 2 && ` +${teamMembers.length - 2}`}
+// //                 </span>
+// //               </div>
+// //             )}
+
+// //             {supervisor && (
+// //               <div className="flex items-center gap-1.5 truncate text-[#059669]">
+// //                 <GraduationCap size={12} className="shrink-0" />
+// //                 <span className="text-[#848C9B] font-medium">Advisor:</span>
+// //                 <span className="text-[#041128] truncate">{supervisor}</span>
+// //               </div>
+// //             )}
+// //           </div>
+
+// //           {/* Tags preview */}
+// //           {tags.length > 0 && (
+// //             <div className="flex flex-wrap gap-1 pt-1">
+// //               {tags.slice(0, 3).map((tag, tIdx) => (
+// //                 <span
+// //                   key={tIdx}
+// //                   className="text-[10px] px-2 py-0.5 rounded-full bg-[#EDF4FC] text-[#041128] font-medium"
+// //                 >
+// //                   #{tag}
+// //                 </span>
+// //               ))}
+// //             </div>
+// //           )}
+
+// //           {/* View Project Link */}
+// //           <div className="pt-2 flex items-center justify-end">
+// //             <span className="inline-flex items-center gap-1.5 text-xs sm:text-[13px] font-primary text-[#041128] group-hover/card:text-[#5277A8] transition-colors font-normal">
+// //               <span>View Project</span>
+// //               <ArrowRight
+// //                 size={13}
+// //                 className="transition-transform duration-250 ease-out group-hover/card:translate-x-1.5"
+// //               />
+// //             </span>
+// //           </div>
+// //         </div>
+// //       </div>
+// //     </Link>
+// //   );
+// // }
+// 'use client';
+
+// import React, { useEffect, useMemo, useState } from 'react';
+// import Link from 'next/link';
+// import {
+//   ArrowLeft,
+//   ArrowRight,
+//   User,
+//   Users,
+//   GraduationCap,
+// } from 'lucide-react';
+
+// import { ProjectImage } from '@/components/ui/ProjectImage';
+// import { getDepartmentMeta } from '@/lib/utils/departmentColors';
+// import type { Department, Project } from '@/types';
+
+// interface DepartmentMarqueeProps {
+//   projects: Array<
+//     Project & {
+//       department?: Department;
+//       departments?: Department;
+//     }
+//   >;
+//   departments: Department[];
+// }
+
+// /* =========================================================
+//    DEPARTMENT ORDER
+// ========================================================= */
+
+// const PREFERRED_ORDER = [
+//   'CSE',
+//   'IT',
+//   'MTECHCSE',
+//   'M.TECH CSE',
+//   'ECE',
+//   'EEE',
+//   'MECH',
+//   'CIVIL',
+//   'CHEM',
+//   'BME',
+//   'GPP',
+// ];
+
+// function formatDeptCode(code: string): string {
+//   const c = code.trim().toUpperCase();
+
+//   if (
+//     c === 'MTECHCSE' ||
+//     c === 'MTECH-CSE' ||
+//     c === 'MTECH_CSE'
+//   ) {
+//     return 'M.TECH CSE';
+//   }
+
+//   return c;
+// }
+
+// /* =========================================================
+//    MAIN DEPARTMENT CONTAINER
+// ========================================================= */
+
+// export function DepartmentMarquee({
+//   projects,
+//   departments,
+// }: DepartmentMarqueeProps) {
+//   const sortedDepts = useMemo(() => {
+//     return [...departments].sort((a, b) => {
+//       const codeA =
+//         a.code?.toUpperCase().replace(/[^A-Z]/g, '') || '';
+
+//       const codeB =
+//         b.code?.toUpperCase().replace(/[^A-Z]/g, '') || '';
+
+//       const idxA = PREFERRED_ORDER.findIndex(
+//         (p) => p.replace(/[^A-Z]/g, '') === codeA
+//       );
+
+//       const idxB = PREFERRED_ORDER.findIndex(
+//         (p) => p.replace(/[^A-Z]/g, '') === codeB
+//       );
+
+//       if (idxA !== -1 && idxB !== -1) {
+//         return idxA - idxB;
+//       }
+
+//       if (idxA !== -1) return -1;
+//       if (idxB !== -1) return 1;
+
+//       return a.name.localeCompare(b.name);
+//     });
+//   }, [departments]);
+
+//   return (
+//     <div className="w-full overflow-x-clip font-primary">
+//       <div className="space-y-24 sm:space-y-28 lg:space-y-32">
+//         {sortedDepts.map((dept) => {
+//           /*
+//            * IMPORTANT:
+//            * Department matching is ONLY done using the actual
+//            * department database ID.
+//            */
+//           const deptProjects = projects.filter((project) => {
+//             const projectDepartmentId =
+//               project.department_id ||
+//               project.departments?.id ||
+//               project.department?.id;
+
+//             return projectDepartmentId === dept.id;
+//           });
+
+//           return (
+//             <DepartmentCarouselSection
+//               key={dept.id}
+//               department={dept}
+//               projects={deptProjects}
+//             />
+//           );
+//         })}
+//       </div>
+//     </div>
+//   );
+// }
+
+// /* =========================================================
+//    DEPARTMENT CAROUSEL
+// ========================================================= */
+
+// interface DepartmentCarouselSectionProps {
+//   department: Department;
+//   projects: Array<
+//     Project & {
+//       department?: Department;
+//       departments?: Department;
+//     }
+//   >;
+// }
+
+// function DepartmentCarouselSection({
+//   department,
+//   projects,
+// }: DepartmentCarouselSectionProps) {
+//   const deptCode = formatDeptCode(department.code || '');
+//   const deptName = department.name || deptCode;
+//   const deptMeta = getDepartmentMeta(deptCode);
+
+//   const [activeIndex, setActiveIndex] = useState(0);
+//   const [isPaused, setIsPaused] = useState(false);
+
+//   /*
+//    * Reset active project if the project list changes.
+//    */
+//   useEffect(() => {
+//     setActiveIndex(0);
+//   }, [projects.length]);
+
+//   /*
+//    * Automatic carousel movement.
+//    *
+//    * It is intentionally slow.
+//    * Users can still control it manually.
+//    */
+//   useEffect(() => {
+//     if (projects.length <= 1 || isPaused) return;
+
+//     const interval = window.setInterval(() => {
+//       setActiveIndex((current) => {
+//         return (current + 1) % projects.length;
+//       });
+//     }, 5500);
+
+//     return () => {
+//       window.clearInterval(interval);
+//     };
+//   }, [projects.length, isPaused]);
+
+//   const goNext = () => {
+//     if (projects.length <= 1) return;
+
+//     setActiveIndex((current) => {
+//       return (current + 1) % projects.length;
+//     });
+//   };
+
+//   const goPrevious = () => {
+//     if (projects.length <= 1) return;
+
+//     setActiveIndex((current) => {
+//       return (
+//         (current - 1 + projects.length) %
+//         projects.length
+//       );
+//     });
+//   };
+
+//   /*
+//    * If no projects exist.
+//    */
+//   if (projects.length === 0) {
+//     return (
+//       <section className="relative w-full">
+//         <DepartmentHeading
+//           deptCode={deptCode}
+//           deptName={deptName}
+//           color={deptMeta.primary}
+//         />
+
+//         <div className="max-w-[620px] mx-auto px-5">
+//           <div className="rounded-[28px] bg-white/70 backdrop-blur-xl border border-white/80 p-10 text-center shadow-[0_15px_45px_rgba(4,17,40,0.06)]">
+//             <div
+//               className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center"
+//               style={{
+//                 backgroundColor: `${deptMeta.primary}12`,
+//                 color: deptMeta.primary,
+//               }}
+//             >
+//               <span className="text-lg">+</span>
+//             </div>
+
+//             <h3 className="text-xl text-[#041128]">
+//               No projects registered yet
+//             </h3>
+
+//             <p className="mt-2 text-sm text-[#5277A8]">
+//               Projects from {deptName} will appear here.
+//             </p>
+//           </div>
+//         </div>
+//       </section>
+//     );
+//   }
+
+//   return (
+//     <section
+//       className="relative w-full"
+//       onMouseEnter={() => setIsPaused(true)}
+//       onMouseLeave={() => setIsPaused(false)}
+//     >
+//       {/* =====================================================
+//           DEPARTMENT TITLE
+//       ===================================================== */}
+
+//       <DepartmentHeading
+//         deptCode={deptCode}
+//         deptName={deptName}
+//         color={deptMeta.primary}
+//       />
+
+//       {/* =====================================================
+//           CAROUSEL
+//       ===================================================== */}
+
+//       <div className="relative w-full mt-8 sm:mt-10">
+//         <div
+//           className="
+//             relative
+//             w-full
+//             h-[470px]
+//             sm:h-[520px]
+//             lg:h-[575px]
+//             overflow-hidden
+//           "
+//         >
+//           {projects.map((project, index) => {
+//             const position = getCircularPosition(
+//               index,
+//               activeIndex,
+//               projects.length
+//             );
+
+//             return (
+//               <CarouselProjectCard
+//                 key={project.id}
+//                 project={project}
+//                 deptCode={deptCode}
+//                 deptName={deptName}
+//                 color={deptMeta.primary}
+//                 position={position}
+//               />
+//             );
+//           })}
+//         </div>
+
+//         {/* ===================================================
+//             CONTROLS
+//         =================================================== */}
+
+//         {projects.length > 1 && (
+//           <div className="relative z-[100] flex items-center justify-center gap-4 -mt-1">
+//             <button
+//               type="button"
+//               onClick={goPrevious}
+//               aria-label={`Previous ${deptCode} project`}
+//               className="
+//                 w-11 h-11
+//                 sm:w-12 sm:h-12
+//                 rounded-full
+//                 bg-white
+//                 border border-[#D9E1EA]
+//                 shadow-[0_8px_25px_rgba(4,17,40,0.10)]
+//                 flex items-center justify-center
+//                 text-[#041128]
+//                 hover:bg-[#041128]
+//                 hover:text-white
+//                 hover:scale-105
+//                 transition-all duration-300
+//                 cursor-pointer
+//               "
+//             >
+//               <ArrowLeft size={18} />
+//             </button>
+
+//             <div className="min-w-[80px] text-center">
+//               <span className="text-xs tracking-[0.18em] text-[#5277A8]">
+//                 {String(activeIndex + 1).padStart(2, '0')}
+//               </span>
+
+//               <span className="text-xs text-[#A0A8B5] mx-1">
+//                 /
+//               </span>
+
+//               <span className="text-xs tracking-[0.18em] text-[#5277A8]">
+//                 {String(projects.length).padStart(2, '0')}
+//               </span>
+//             </div>
+
+//             <button
+//               type="button"
+//               onClick={goNext}
+//               aria-label={`Next ${deptCode} project`}
+//               className="
+//                 w-11 h-11
+//                 sm:w-12 sm:h-12
+//                 rounded-full
+//                 bg-white
+//                 border border-[#D9E1EA]
+//                 shadow-[0_8px_25px_rgba(4,17,40,0.10)]
+//                 flex items-center justify-center
+//                 text-[#041128]
+//                 hover:bg-[#041128]
+//                 hover:text-white
+//                 hover:scale-105
+//                 transition-all duration-300
+//                 cursor-pointer
+//               "
+//             >
+//               <ArrowRight size={18} />
+//             </button>
+//           </div>
+//         )}
+
+//         {/* ===================================================
+//             PROGRESS LINE
+//         =================================================== */}
+
+//         {projects.length > 1 && (
+//           <div className="max-w-[420px] mx-auto mt-6 px-6">
+//             <div className="h-[2px] bg-[#DCE2E9] rounded-full overflow-hidden">
+//               <div
+//                 className="h-full rounded-full transition-all duration-700 ease-out"
+//                 style={{
+//                   width: `${
+//                     ((activeIndex + 1) / projects.length) * 100
+//                   }%`,
+//                   background: `linear-gradient(
+//                     90deg,
+//                     ${deptMeta.primary},
+//                     ${deptMeta.secondary}
+//                   )`,
+//                 }}
+//               />
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </section>
+//   );
+// }
+
+// /* =========================================================
+//    DEPARTMENT HEADING
+// ========================================================= */
+
+// function DepartmentHeading({
+//   deptCode,
+//   deptName,
+//   color,
+// }: {
+//   deptCode: string;
+//   deptName: string;
+//   color: string;
+// }) {
+//   return (
+//     <div className="flex items-center justify-center gap-3 sm:gap-6 max-w-5xl mx-auto px-5">
+//       <div
+//         className="flex-1 h-[2px] rounded-full"
+//         style={{
+//           background: `linear-gradient(
+//             90deg,
+//             transparent,
+//             ${color}
+//           )`,
+//         }}
+//       />
+
+//       <div className="text-center shrink-0">
+//         <div className="text-[30px] sm:text-[38px] lg:text-[44px] leading-none tracking-[0.08em] text-[#041128] font-normal uppercase">
+//           {deptCode}
+//         </div>
+
+//         <div className="mt-2 text-xs sm:text-sm text-[#5277A8] tracking-[0.08em]">
+//           {deptName}
+//         </div>
+//       </div>
+
+//       <div
+//         className="flex-1 h-[2px] rounded-full"
+//         style={{
+//           background: `linear-gradient(
+//             90deg,
+//             ${color},
+//             transparent
+//           )`,
+//         }}
+//       />
+//     </div>
+//   );
+// }
+
+// /* =========================================================
+//    POSITION CALCULATION
+// =========================================================
+
+//    The carousel always tries to show:
+
+//                  CENTER
+//                    ↑
+//              LEFT       RIGHT
+//                 ↖       ↗
+//           FAR LEFT     FAR RIGHT
+
+//    Center = large + high
+//    Left/right = smaller + lower
+//    Far cards = faded + further away
+// ========================================================= */
+
+// type CarouselPosition =
+//   | 'center'
+//   | 'left'
+//   | 'right'
+//   | 'far-left'
+//   | 'far-right'
+//   | 'hidden';
+
+// function getCircularPosition(
+//   index: number,
+//   activeIndex: number,
+//   total: number
+// ): CarouselPosition {
+//   if (total === 1) {
+//     return index === activeIndex ? 'center' : 'hidden';
+//   }
+
+//   let difference = index - activeIndex;
+
+//   /*
+//    * Wrap around the array so the carousel is continuous.
+//    */
+//   if (difference > total / 2) {
+//     difference -= total;
+//   }
+
+//   if (difference < -total / 2) {
+//     difference += total;
+//   }
+
+//   if (difference === 0) return 'center';
+//   if (difference === -1) return 'left';
+//   if (difference === 1) return 'right';
+//   if (difference === -2) return 'far-left';
+//   if (difference === 2) return 'far-right';
+
+//   return 'hidden';
+// }
+
+// /* =========================================================
+//    PROJECT CARD
+// ========================================================= */
+
+// function CarouselProjectCard({
+//   project,
+//   deptCode,
+//   deptName,
+//   color,
+//   position,
+// }: {
+//   project: Project & {
+//     department?: Department;
+//     departments?: Department;
+//   };
+//   deptCode: string;
+//   deptName: string;
+//   color: string;
+//   position: CarouselPosition;
+// }) {
+//   const teamMembers = Array.isArray(project.team_members)
+//     ? project.team_members.filter(Boolean)
+//     : [];
+
+//   const tags = Array.isArray(project.tags)
+//     ? project.tags.filter(Boolean)
+//     : [];
+
+//   const supervisor = project.project_supervisor;
+
+//   /*
+//    * Each card directly links to its own project page.
+//    *
+//    * encodeURIComponent prevents project IDs containing spaces,
+//    * slashes, #, etc. from breaking the route.
+//    */
+//   const projectHref = `/projects/${encodeURIComponent(
+//     project.project_id
+//   )}`;
+
+//   /*
+//    * Position-specific styling.
+//    *
+//    * IMPORTANT:
+//    * There is NO purple overlay here.
+//    *
+//    * The image remains visible.
+//    */
+//   const positionStyles: Record<
+//     CarouselPosition,
+//     React.CSSProperties
+//   > = {
+//     center: {
+//       left: '50%',
+//       top: '8px',
+//       width: 'min(390px, 74vw)',
+//       height: '500px',
+//       opacity: 1,
+//       zIndex: 50,
+//       transform:
+//         'translateX(-50%) translateY(0) scale(1)',
+//       filter: 'none',
+//     },
+
+//     left: {
+//       left: '50%',
+//       top: '65px',
+//       width: 'min(350px, 66vw)',
+//       height: '455px',
+//       opacity: 0.82,
+//       zIndex: 35,
+//       transform:
+//         'translateX(calc(-50% - min(285px, 27vw))) translateY(55px) scale(0.91)',
+//       filter: 'none',
+//     },
+
+//     right: {
+//       left: '50%',
+//       top: '65px',
+//       width: 'min(350px, 66vw)',
+//       height: '455px',
+//       opacity: 0.82,
+//       zIndex: 35,
+//       transform:
+//         'translateX(calc(-50% + min(285px, 27vw))) translateY(55px) scale(0.91)',
+//       filter: 'none',
+//     },
+
+//     'far-left': {
+//       left: '50%',
+//       top: '90px',
+//       width: 'min(320px, 60vw)',
+//       height: '420px',
+//       opacity: 0.46,
+//       zIndex: 20,
+//       transform:
+//         'translateX(calc(-50% - min(500px, 47vw))) translateY(105px) scale(0.84)',
+//       filter: 'saturate(0.82)',
+//     },
+
+//     'far-right': {
+//       left: '50%',
+//       top: '90px',
+//       width: 'min(320px, 60vw)',
+//       height: '420px',
+//       opacity: 0.46,
+//       zIndex: 20,
+//       transform:
+//         'translateX(calc(-50% + min(500px, 47vw))) translateY(105px) scale(0.84)',
+//       filter: 'saturate(0.82)',
+//     },
+
+//     hidden: {
+//       left: '50%',
+//       top: '100px',
+//       width: '320px',
+//       height: '420px',
+//       opacity: 0,
+//       zIndex: 0,
+//       pointerEvents: 'none',
+//       transform:
+//         'translateX(-50%) translateY(120px) scale(0.75)',
+//       filter: 'blur(4px)',
+//     },
+//   };
+
+//   const isCenter = position === 'center';
+//   const isVisible = position !== 'hidden';
+
+//   if (!isVisible) {
+//     return (
+//       <div
+//         aria-hidden="true"
+//         className="absolute pointer-events-none"
+//         style={positionStyles[position]}
+//       />
+//     );
+//   }
+
+//   return (
+//     <Link
+//       href={projectHref}
+//       draggable={false}
+//       aria-label={`View project ${project.title}`}
+//       className={`
+//         absolute
+//         block
+//         rounded-[26px]
+//         sm:rounded-[30px]
+//         overflow-hidden
+//         select-none
+//         cursor-pointer
+//         transition-all
+//         duration-[750ms]
+//         ease-[cubic-bezier(0.22,1,0.36,1)]
+//         focus:outline-none
+//         focus-visible:ring-2
+//         focus-visible:ring-offset-4
+//         focus-visible:ring-[#041128]
+//         ${
+//           isCenter
+//             ? 'hover:scale-[1.015]'
+//             : 'hover:scale-[0.94]'
+//         }
+//       `}
+//       style={{
+//         ...positionStyles[position],
+//         border: `1px solid ${
+//           isCenter
+//             ? `${color}88`
+//             : 'rgba(4,17,40,0.10)'
+//         }`,
+//         boxShadow: isCenter
+//           ? '0 28px 70px rgba(4,17,40,0.22)'
+//           : '0 18px 45px rgba(4,17,40,0.12)',
+//         backgroundColor: '#EDEBE6',
+//       }}
+//     >
+//       {/* ===================================================
+//           IMAGE
+//       =================================================== */}
+
+//       <div className="absolute inset-0">
+//         <ProjectImage
+//           src={project.image_url}
+//           alt={`${project.title} - Innovation Day project`}
+//           deptCode={deptCode}
+//           deptName={deptName}
+//           projectId={project.project_id}
+//           sizes="
+//             (max-width: 640px) 74vw,
+//             (max-width: 1024px) 390px,
+//             390px
+//           "
+//           imageClassName={`
+//             w-full
+//             h-full
+//             object-cover
+//             ${
+//               isCenter
+//                 ? 'transition-transform duration-[1200ms] ease-out hover:scale-[1.035]'
+//                 : ''
+//             }
+//           `}
+//         />
+//       </div>
+
+//       {/* ===================================================
+//           VERY LIGHT DEPARTMENT TINT
+          
+//           This is intentionally VERY subtle.
+//           It does NOT cover the image.
+//       =================================================== */}
+
+//       <div
+//         className="absolute inset-0 pointer-events-none"
+//         style={{
+//           background: `
+//             linear-gradient(
+//               180deg,
+//               rgba(4,17,40,0.00) 0%,
+//               rgba(4,17,40,0.00) 45%,
+//               rgba(4,17,40,0.10) 63%,
+//               rgba(4,17,40,0.76) 100%
+//             )
+//           `,
+//         }}
+//       />
+
+//       {/* ===================================================
+//           SMALL DEPARTMENT COLOR GLOW
+          
+//           Only at the bottom.
+//       =================================================== */}
+
+//       <div
+//         className="absolute bottom-0 left-0 right-0 h-[34%] pointer-events-none"
+//         style={{
+//           background: `linear-gradient(
+//             180deg,
+//             transparent 0%,
+//             ${color}10 55%,
+//             ${color}28 100%
+//           )`,
+//         }}
+//       />
+
+//       {/* ===================================================
+//           TOP PROJECT ID
+//       =================================================== */}
+
+//       <div
+//         className={`
+//           absolute
+//           top-4
+//           left-4
+//           right-4
+//           flex
+//           items-center
+//           justify-between
+//           pointer-events-none
+//           transition-all duration-500
+//         `}
+//       >
+//         <span
+//           className="
+//             px-3
+//             py-1.5
+//             rounded-full
+//             bg-black/25
+//             backdrop-blur-[8px]
+//             border border-white/30
+//             text-white
+//             text-[10px]
+//             sm:text-[11px]
+//             tracking-[0.14em]
+//             uppercase
+//           "
+//         >
+//           {deptCode}
+//         </span>
+
+//         <span
+//           className="
+//             px-3
+//             py-1.5
+//             rounded-full
+//             bg-black/25
+//             backdrop-blur-[8px]
+//             border border-white/30
+//             text-white
+//             text-[10px]
+//             sm:text-[11px]
+//             tracking-[0.12em]
+//           "
+//         >
+//           {project.project_id}
+//         </span>
+//       </div>
+
+//       {/* ===================================================
+//           PROJECT INFORMATION
+          
+//           Positioned only in bottom area.
+//           This keeps the image itself clear.
+//       =================================================== */}
+
+//       <div
+//         className={`
+//           absolute
+//           left-5
+//           right-5
+//           bottom-5
+//           sm:left-7
+//           sm:right-7
+//           sm:bottom-7
+//           text-white
+//           pointer-events-none
+//           ${
+//             isCenter
+//               ? 'opacity-100'
+//               : 'opacity-90'
+//           }
+//         `}
+//       >
+//         {/* Innovation Day label */}
+
+//         <div className="flex items-center gap-2 mb-2">
+//           <span
+//             className="w-7 h-[2px] rounded-full"
+//             style={{
+//               backgroundColor: color,
+//             }}
+//           />
+
+//           <span className="text-[9px] sm:text-[10px] tracking-[0.22em] uppercase text-white/85">
+//             Innovation Day
+//           </span>
+//         </div>
+
+//         {/* Title */}
+
+//         <h3
+//           className={`
+//             font-primary
+//             font-normal
+//             leading-[1.04]
+//             tracking-[-0.02em]
+//             drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]
+//             ${
+//               isCenter
+//                 ? 'text-[27px] sm:text-[32px]'
+//                 : 'text-[20px] sm:text-[23px]'
+//             }
+//             line-clamp-2
+//           `}
+//         >
+//           {project.title}
+//         </h3>
+
+//         {/* Lead */}
+
+//         <div className="mt-3 flex items-center gap-2 text-white/90">
+//           <User size={13} className="shrink-0" />
+
+//           <span className="text-[10px] sm:text-[11px]">
+//             Team Lead
+//           </span>
+
+//           <span className="text-white/60">·</span>
+
+//           <span className="text-[10px] sm:text-[11px] truncate">
+//             {project.project_lead}
+//           </span>
+//         </div>
+
+//         {/* Team / Advisor */}
+
+//         {isCenter && (
+//           <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-white/75">
+//             {teamMembers.length > 0 && (
+//               <div className="flex items-center gap-1.5">
+//                 <Users size={12} />
+
+//                 <span className="text-[10px]">
+//                   {teamMembers.length}{' '}
+//                   {teamMembers.length === 1
+//                     ? 'member'
+//                     : 'members'}
+//                 </span>
+//               </div>
+//             )}
+
+//             {supervisor && (
+//               <div className="flex items-center gap-1.5">
+//                 <GraduationCap size={12} />
+
+//                 <span className="text-[10px] truncate max-w-[180px]">
+//                   {supervisor}
+//                 </span>
+//               </div>
+//             )}
+//           </div>
+//         )}
+
+//         {/* Tags */}
+
+//         {isCenter && tags.length > 0 && (
+//           <div className="flex flex-wrap gap-1.5 mt-3">
+//             {tags.slice(0, 3).map((tag, index) => (
+//               <span
+//                 key={`${tag}-${index}`}
+//                 className="
+//                   px-2.5
+//                   py-1
+//                   rounded-full
+//                   bg-white/15
+//                   backdrop-blur-md
+//                   border border-white/20
+//                   text-[9px]
+//                   text-white/90
+//                 "
+//               >
+//                 #{tag}
+//               </span>
+//             ))}
+//           </div>
+//         )}
+
+//         {/* Explore */}
+
+//         <div
+//           className={`
+//             mt-4
+//             flex
+//             items-center
+//             gap-2
+//             text-white
+//             ${
+//               isCenter
+//                 ? 'text-[11px] tracking-[0.16em]'
+//                 : 'text-[9px] tracking-[0.12em]'
+//             }
+//             uppercase
+//           `}
+//         >
+//           <span>Explore Project</span>
+
+//           <ArrowRight
+//             size={isCenter ? 14 : 11}
+//             className="transition-transform duration-300 group-hover:translate-x-1"
+//           />
+//         </div>
+//       </div>
+
+//       {/* ===================================================
+//           CENTER CARD ACCENT
+//       =================================================== */}
+
+//       {isCenter && (
+//         <div
+//           className="absolute top-0 left-0 right-0 h-[3px]"
+//           style={{
+//             background: `linear-gradient(
+//               90deg,
+//               transparent,
+//               ${color},
+//               transparent
+//             )`,
+//           }}
+//         />
+//       )}
+//     </Link>
+//   );
+// }
+
 'use client';
 
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowRight, User, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils/cn';
+import {
+  ArrowLeft,
+  ArrowRight,
+  User,
+  Users,
+  GraduationCap,
+} from 'lucide-react';
+
+import { ProjectImage } from '@/components/ui/ProjectImage';
+import { getDepartmentMeta } from '@/lib/utils/departmentColors';
 import type { Department, Project } from '@/types';
 
 interface DepartmentMarqueeProps {
-  projects: Array<Project & { department?: Department }>;
+  projects: Array<
+    Project & {
+      department?: Department;
+      departments?: Department;
+    }
+  >;
   departments: Department[];
 }
 
-// Preferred presentation order for all 9 exhibition departments
-const PREFERRED_ORDER = ['CSE', 'IT', 'MTECHCSE', 'M.TECH CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'BME'];
+/* =========================================================
+   DEPARTMENT ORDER
+========================================================= */
 
-// Deterministic image fallback: /img1.png, /img2.png, /img3.png
-function getProjectThumbnail(project: Project & { department?: Department }) {
-  if (project.image_url && project.image_url.trim().length > 0) {
-    return project.image_url;
-  }
-  const fallbacks = ['/img1.png', '/img2.png', '/img3.png'];
-  const key = project.project_id || project.id || 'BC';
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    hash = (hash << 5) - hash + key.charCodeAt(i);
-    hash |= 0;
-  }
-  return fallbacks[Math.abs(hash) % fallbacks.length];
-}
+const PREFERRED_ORDER = [
+  'CSE',
+  'IT',
+  'MTECHCSE',
+  'M.TECH CSE',
+  'ECE',
+  'EEE',
+  'MECH',
+  'CIVIL',
+  'CHEM',
+  'BME',
+  'GPP',
+];
 
 function formatDeptCode(code: string): string {
   const c = code.trim().toUpperCase();
-  if (c === 'MTECHCSE' || c === 'MTECH-CSE' || c === 'MTECH_CSE') {
+
+  if (
+    c === 'MTECHCSE' ||
+    c === 'MTECH-CSE' ||
+    c === 'MTECH_CSE'
+  ) {
     return 'M.TECH CSE';
   }
+
   return c;
 }
 
-export function DepartmentMarquee({ projects, departments }: DepartmentMarqueeProps) {
-  // Sort departments dynamically from database according to standard exhibition presentation order
-  const sortedDepts = [...departments].sort((a, b) => {
-    const codeA = a.code?.toUpperCase().replace(/[^A-Z]/g, '') || '';
-    const codeB = b.code?.toUpperCase().replace(/[^A-Z]/g, '') || '';
-    const idxA = PREFERRED_ORDER.findIndex((p) => p.replace(/[^A-Z]/g, '') === codeA);
-    const idxB = PREFERRED_ORDER.findIndex((p) => p.replace(/[^A-Z]/g, '') === codeB);
-    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-    if (idxA !== -1) return -1;
-    if (idxB !== -1) return 1;
-    return a.name.localeCompare(b.name);
-  });
+/* =========================================================
+   MAIN DEPARTMENT CONTAINER
+========================================================= */
+
+export function DepartmentMarquee({
+  projects,
+  departments,
+}: DepartmentMarqueeProps) {
+  const sortedDepts = useMemo(() => {
+    return [...departments].sort((a, b) => {
+      const codeA =
+        a.code?.toUpperCase().replace(/[^A-Z]/g, '') || '';
+
+      const codeB =
+        b.code?.toUpperCase().replace(/[^A-Z]/g, '') || '';
+
+      const idxA = PREFERRED_ORDER.findIndex(
+        (p) => p.replace(/[^A-Z]/g, '') === codeA
+      );
+
+      const idxB = PREFERRED_ORDER.findIndex(
+        (p) => p.replace(/[^A-Z]/g, '') === codeB
+      );
+
+      if (idxA !== -1 && idxB !== -1) {
+        return idxA - idxB;
+      }
+
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+
+      return a.name.localeCompare(b.name);
+    });
+  }, [departments]);
 
   return (
-    <div className="space-y-10 sm:space-y-14 w-full max-w-[100vw] overflow-x-clip select-none">
-      {sortedDepts.map((dept, rowIndex) => {
-        // STRICT DATABASE ID MATCHING: project.department_id === dept.id
-        // Guarantees zero project mixing between departments.
-        const deptProjects = projects.filter((project) => {
-          const pDeptId =
-            project.department_id ||
-            (project as any).departments?.id ||
-            (project as any).department?.id;
-          return pDeptId === dept.id;
-        });
+    <div className="w-full overflow-x-clip font-primary">
+      <div className="space-y-20 sm:space-y-24 lg:space-y-28">
+        {sortedDepts.map((dept) => {
+          /*
+           * STRICT DATABASE ID MATCHING
+           */
+          const deptProjects = projects.filter((project) => {
+            const projectDepartmentId =
+              project.department_id ||
+              project.departments?.id ||
+              project.department?.id;
 
-        // Alternating directions across departments:
-        // Row 0: Left (←), Row 1: Right (→), Row 2: Left (←), etc.
-        const isLtr = rowIndex % 2 === 0;
+            return projectDepartmentId === dept.id;
+          });
 
-        return (
-          <DepartmentWaveSection
-            key={dept.id}
-            department={dept}
-            projects={deptProjects}
-            isLtr={isLtr}
-          />
-        );
-      })}
+          return (
+            <DepartmentCarouselSection
+              key={dept.id}
+              department={dept}
+              projects={deptProjects}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-// ── DEPARTMENT WAVE SECTION WITH CONTINUOUS TRAVELLING SINE WAVE ──
-interface DepartmentWaveSectionProps {
+/* =========================================================
+   DEPARTMENT CAROUSEL
+========================================================= */
+
+interface DepartmentCarouselSectionProps {
   department: Department;
-  projects: Array<Project & { department?: Department }>;
-  isLtr: boolean;
+  projects: Array<
+    Project & {
+      department?: Department;
+      departments?: Department;
+    }
+  >;
 }
 
-function DepartmentWaveSection({
+function DepartmentCarouselSection({
   department,
   projects,
-  isLtr,
-}: DepartmentWaveSectionProps) {
+}: DepartmentCarouselSectionProps) {
   const deptCode = formatDeptCode(department.code || '');
   const deptName = department.name || deptCode;
+  const deptMeta = getDepartmentMeta(deptCode);
 
-  // Track animation and interaction refs
-  const trackRef = useRef<HTMLDivElement>(null);
-  const cardElementsRef = useRef<HTMLElement[]>([]);
-  const offsetRef = useRef(0);
-  const singleSetWidthRef = useRef(0);
-  const amplitudeRef = useRef(160);
-  const speedRef = useRef(0.85);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
-  const isHovered = useRef(false);
-  const isDownRef = useRef(false);
-  const isDragging = useRef(false);
-  const dragStartX = useRef(0);
-  const dragStartY = useRef(0);
-  const dragStartOffset = useRef(0);
-  const dragDistanceX = useRef(0);
-  const hasDraggedRecently = useRef(false);
-
-  // Duplication count to ensure endless, gap-free infinite wrapping
-  const loopCount = Math.max(4, Math.ceil(14 / (projects.length || 1)));
-
-  // Direction: isLtr === true -> Marquee flows Left (direction = -1); isLtr === false -> flows Right (direction = 1)
-  const direction = isLtr ? -1 : 1;
-
-  // Responsive wave amplitude and speed based on viewport width
-  const updateResponsiveDimensions = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    const w = window.innerWidth;
-    if (w >= 1024) {
-      amplitudeRef.current = 160; // Desktop: substantial 160px amplitude (140-200px range)
-      speedRef.current = 0.85;    // ~51 px/sec (35-55 px/sec range)
-    } else if (w >= 768) {
-      amplitudeRef.current = 100; // Tablet: 100px amplitude (90-140px range)
-      speedRef.current = 0.65;    // ~39 px/sec (30-45 px/sec range)
-    } else {
-      amplitudeRef.current = 60;  // Mobile: 60px amplitude (50-90px range)
-      speedRef.current = 0.50;    // ~30 px/sec (25-40 px/sec range)
-    }
-  }, []);
-
-  // Measure single set width for seamless modulo looping
-  const measure = useCallback(() => {
-    if (!trackRef.current) return;
-    updateResponsiveDimensions();
-    const totalScrollWidth = trackRef.current.scrollWidth;
-    if (totalScrollWidth > 0) {
-      const setWidth = totalScrollWidth / loopCount;
-      singleSetWidthRef.current = setWidth;
-
-      // Cache child card wrapper elements for ultra-fast, zero-overhead per-frame transform updates
-      cardElementsRef.current = Array.from(trackRef.current.children) as HTMLElement[];
-
-      // When moving right, initialize one full set to the left to avoid initial visual snap
-      if (direction === 1 && offsetRef.current === 0) {
-        offsetRef.current = -setWidth;
-      }
-    }
-  }, [loopCount, direction, updateResponsiveDimensions]);
-
-  // Apply both horizontal marquee translate and simultaneous vertical travelling sine-wave to each card
-  const applyTransforms = useCallback(() => {
-    if (!trackRef.current || singleSetWidthRef.current <= 0) return;
-
-    // A. Horizontal infinite marquee translation
-    trackRef.current.style.transform = `translate3d(${offsetRef.current.toFixed(2)}px, 0, 0)`;
-
-    // B. Simultaneous travelling vertical sine wave for each card
-    const singleSet = singleSetWidthRef.current;
-    const cardPitch = singleSet / projects.length;
-    // 2-card period: creates alternating peaks and troughs across the visible track
-    const wavelength = cardPitch * 2;
-    const amplitude = amplitudeRef.current;
-    const cards = cardElementsRef.current;
-
-    for (let i = 0; i < cards.length; i++) {
-      const cardEl = cards[i];
-      if (!cardEl) continue;
-      // Physical horizontal position of card i relative to viewport
-      const cardX = offsetRef.current + i * cardPitch;
-      const phase = (cardX / wavelength) * 2 * Math.PI;
-      // Wave function: 0 at crest, amplitude at trough (continuous floating undulation)
-      const y = (amplitude / 2) * (1 - Math.cos(phase));
-      cardEl.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`;
-    }
+  /* Reset when projects change */
+  useEffect(() => {
+    setActiveIndex(0);
   }, [projects.length]);
 
+  /* =======================================================
+     AUTO CAROUSEL
+  ======================================================= */
+
   useEffect(() => {
-    if (projects.length < 4) return;
+    if (projects.length <= 1 || isPaused) return;
 
-    measure();
-    const handleResize = () => {
-      measure();
-      applyTransforms();
-    };
-    window.addEventListener('resize', handleResize, { passive: true });
-
-    // Check prefers-reduced-motion
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (prefersReducedMotion) {
-      applyTransforms();
-      return () => {
-        window.removeEventListener('resize', handleResize);
-      };
-    }
-
-    // IntersectionObserver: Pause RAF calculation when section is off-screen
-    let isVisible = true;
-    let observer: IntersectionObserver | null = null;
-    if (typeof IntersectionObserver !== 'undefined' && trackRef.current) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            isVisible = entry.isIntersecting;
-          }
-        },
-        { rootMargin: '250px 0px' }
-      );
-      observer.observe(trackRef.current);
-    }
-
-    let animationFrameId: number;
-
-    const animate = () => {
-      const singleSet = singleSetWidthRef.current;
-      if (isVisible && !isDragging.current && !isDownRef.current && singleSet > 0) {
-        // Slow down slightly on hover
-        const currentSpeed = isHovered.current ? speedRef.current * 0.25 : speedRef.current;
-        offsetRef.current += currentSpeed * direction;
-
-        // Modulo wrapping for continuous, seamless infinite movement
-        if (direction === -1) {
-          if (offsetRef.current <= -singleSet) {
-            offsetRef.current += singleSet;
-          }
-        } else {
-          if (offsetRef.current >= 0) {
-            offsetRef.current -= singleSet;
-          }
-        }
-
-        applyTransforms();
-      }
-
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    animationFrameId = requestAnimationFrame(animate);
+    const interval = window.setInterval(() => {
+      setActiveIndex((current) => {
+        return (current + 1) % projects.length;
+      });
+    }, 5500);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', handleResize);
-      if (observer) {
-        observer.disconnect();
-      }
+      window.clearInterval(interval);
     };
-  }, [projects.length, direction, measure, applyTransforms]);
+  }, [projects.length, isPaused]);
 
-  // Pointer event handlers supporting both mouse drag and touch swipe with vertical scroll priority
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-    isDownRef.current = true;
-    dragStartX.current = e.clientX;
-    dragStartY.current = e.clientY;
-    dragStartOffset.current = offsetRef.current;
-    dragDistanceX.current = 0;
-    isDragging.current = false;
+  const goNext = () => {
+    if (projects.length <= 1) return;
+
+    setActiveIndex((current) => {
+      return (current + 1) % projects.length;
+    });
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDownRef.current) return;
-    const deltaX = e.clientX - dragStartX.current;
-    const deltaY = e.clientY - dragStartY.current;
-    const absX = Math.abs(deltaX);
-    const absY = Math.abs(deltaY);
+  const goPrevious = () => {
+    if (projects.length <= 1) return;
 
-    // Mobile gesture detection: if user is primarily scrolling vertically, let the page scroll freely
-    if (!isDragging.current) {
-      if (absY > 8 && absY > absX * 1.1) {
-        // Clear vertical scroll detected: cancel dragging and yield control to browser native page scroll
-        isDownRef.current = false;
-        return;
-      }
-      if (absX > 8 && absX > absY) {
-        // Clear horizontal swipe detected: lock marquee dragging
-        isDragging.current = true;
-        dragStartOffset.current = offsetRef.current;
-        dragStartX.current = e.clientX;
-        try {
-          (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-        } catch {}
-      }
-    }
-
-    if (isDragging.current) {
-      dragDistanceX.current = Math.abs(e.clientX - dragStartX.current);
-      const singleSet = singleSetWidthRef.current;
-      if (singleSet > 0) {
-        let newOffset = dragStartOffset.current + (e.clientX - dragStartX.current);
-
-        // Wrap continuously during user dragging
-        while (newOffset <= -singleSet * (loopCount - 1)) newOffset += singleSet;
-        while (newOffset > 0) newOffset -= singleSet;
-
-        offsetRef.current = newOffset;
-        applyTransforms();
-      }
-    }
+    setActiveIndex((current) => {
+      return (
+        (current - 1 + projects.length) %
+        projects.length
+      );
+    });
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') {
-      isHovered.current = false;
-    }
-    if (!isDownRef.current) return;
-    isDownRef.current = false;
+  /* =======================================================
+     EMPTY DEPARTMENT
+  ======================================================= */
 
-    if (isDragging.current) {
-      isDragging.current = false;
-      // If dragged beyond threshold (6px), prevent accidental project card navigation
-      if (dragDistanceX.current > 6) {
-        hasDraggedRecently.current = true;
-        setTimeout(() => {
-          hasDraggedRecently.current = false;
-        }, 150);
-      }
-    }
+  if (projects.length === 0) {
+    return (
+      <section className="relative w-full">
+        <DepartmentHeading
+          deptCode={deptCode}
+          deptName={deptName}
+          color={deptMeta.primary}
+        />
 
-    try {
-      if ((e.currentTarget as HTMLElement).hasPointerCapture?.(e.pointerId)) {
-        (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
-      }
-    } catch {}
-  };
-
-  return (
-    <div className="relative w-full">
-      {/* ── 1. CENTERED COMPACT DEPARTMENT HEADING ── */}
-      {/* Close vertical proximity: mb-2 sm:mb-3 eliminates excessive empty gaps */}
-      <div className="flex items-center justify-center gap-3 sm:gap-6 mb-2 sm:mb-3 max-w-4xl mx-auto px-4 select-none">
-        <div className="flex-1 h-[1.5px]" style={{ background: 'linear-gradient(90deg, transparent, #FF9D00, #FF5A00)' }} />
-        <div className="text-center shrink-0">
-          <div className="font-primary text-2xl sm:text-3xl lg:text-[38px] text-[#041128] tracking-widest font-normal uppercase leading-tight">
-            {deptCode}
-          </div>
-          <div className="text-xs sm:text-[13px] font-primary text-[#5277A8] tracking-wider mt-0.5 font-normal">
-            {deptName}
-          </div>
-        </div>
-        <div className="flex-1 h-[1.5px]" style={{ background: 'linear-gradient(90deg, #FF5A00, #FF9D00, transparent)' }} />
-      </div>
-
-      {/* ── 2. PROJECT WAVE TRACK / CASES ── */}
-      {projects.length === 0 ? (
-        /* Case 0: No projects available yet */
-        <div className="max-w-[620px] mx-auto px-5 text-center pt-2 pb-8">
-          <div className="rounded-[26px] bg-white/70 backdrop-blur-[18px] border border-white/80 p-8 sm:p-10 shadow-[0_10px_35px_rgba(4,17,40,0.06)]">
-            <div className="w-12 h-12 rounded-full bg-[#EDF4FC] text-[#5277A8] flex items-center justify-center mx-auto mb-3.5">
-              <Sparkles size={20} />
+        <div className="max-w-[620px] mx-auto px-5 mt-6">
+          <div className="rounded-[28px] bg-white/70 backdrop-blur-xl border border-white/80 p-10 text-center shadow-[0_15px_45px_rgba(4,17,40,0.06)]">
+            <div
+              className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center"
+              style={{
+                backgroundColor: `${deptMeta.primary}12`,
+                color: deptMeta.primary,
+              }}
+            >
+              <span className="text-lg">+</span>
             </div>
-            <h4 className="font-primary text-xl text-[#041128] font-normal">
-              No projects available yet.
-            </h4>
-            <p className="font-primary text-xs sm:text-sm text-[#41516B] mt-2 leading-relaxed font-normal">
-              Student engineering prototypes for {deptName} are currently in preparation.
+
+            <h3 className="text-xl text-[#041128]">
+              No projects registered yet
+            </h3>
+
+            <p className="mt-2 text-sm text-[#5277A8]">
+              Projects from {deptName} will appear here.
             </p>
           </div>
         </div>
-      ) : projects.length === 1 ? (
-        /* Case 1: Exactly 1 project (Centered) */
-        <div className="max-w-[380px] mx-auto px-4 pt-2 pb-8 flex justify-center">
-          <WaveProjectCard
-            project={projects[0]}
-            deptCode={deptCode}
-          />
-        </div>
-      ) : projects.length === 2 ? (
-        /* Case 2: Exactly 2 projects (Balanced Wave) */
-        <div className="max-w-[850px] mx-auto px-4 pt-2 pb-44 lg:pb-52 flex flex-col sm:flex-row items-start justify-center gap-8 sm:gap-12">
-          <div className="translate-y-0">
-            <WaveProjectCard
-              project={projects[0]}
-              deptCode={deptCode}
-            />
-          </div>
-          <div className="translate-y-[60px] lg:translate-y-[150px]">
-            <WaveProjectCard
-              project={projects[1]}
-              deptCode={deptCode}
-            />
-          </div>
-        </div>
-      ) : projects.length === 3 ? (
-        /* Case 3: Exactly 3 projects (3-Card Wave: Peak, Trough, Peak) */
-        <div className="max-w-[1240px] mx-auto px-4 pt-2 pb-44 lg:pb-52 flex flex-col lg:flex-row items-start justify-center gap-6 sm:gap-8">
-          <div className="translate-y-0">
-            <WaveProjectCard
-              project={projects[0]}
-              deptCode={deptCode}
-            />
-          </div>
-          <div className="translate-y-[60px] lg:translate-y-[150px]">
-            <WaveProjectCard
-              project={projects[1]}
-              deptCode={deptCode}
-            />
-          </div>
-          <div className="translate-y-0">
-            <WaveProjectCard
-              project={projects[2]}
-              deptCode={deptCode}
-            />
-          </div>
-        </div>
-      ) : (
-        /* Case 4+: 4+ Projects — Continuous Infinite Scroll + Dynamic Travelling Sine-Wave Marquee */
+      </section>
+    );
+  }
+
+  return (
+    <section
+      className="relative w-full"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* =====================================================
+          DEPARTMENT TITLE
+      ===================================================== */}
+
+      <DepartmentHeading
+        deptCode={deptCode}
+        deptName={deptName}
+        color={deptMeta.primary}
+      />
+
+      {/* =====================================================
+          CAROUSEL
+      ===================================================== */}
+
+      <div className="relative w-full mt-6 sm:mt-8">
         <div
-          className="group/track relative w-full overflow-hidden pt-2 pb-48 lg:pb-56 touch-pan-y cursor-grab active:cursor-grabbing"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          onMouseEnter={() => {
-            isHovered.current = true;
-          }}
-          onMouseLeave={() => {
-            isHovered.current = false;
-          }}
+          className="
+            relative
+            w-full
+            h-[405px]
+            sm:h-[435px]
+            lg:h-[455px]
+            overflow-hidden
+          "
         >
-          {/* Lateral Translucent Edge Scrims */}
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-28 bg-gradient-to-r from-[#F8F7F3] via-[#F8F7F3]/80 to-transparent z-20" />
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-28 bg-gradient-to-l from-[#F8F7F3] via-[#F8F7F3]/80 to-transparent z-20" />
+          {projects.map((project, index) => {
+            const position = getCircularPosition(
+              index,
+              activeIndex,
+              projects.length
+            );
 
-          {/* Marquee Viewport & Track Container */}
-          <div className="w-full overflow-visible">
-            <div
-              ref={trackRef}
-              className="flex items-start will-change-transform select-none"
+            return (
+              <CarouselProjectCard
+                key={project.id}
+                project={project}
+                deptCode={deptCode}
+                deptName={deptName}
+                color={deptMeta.primary}
+                position={position}
+              />
+            );
+          })}
+        </div>
+
+        {/* ===================================================
+            CONTROLS
+        =================================================== */}
+
+        {projects.length > 1 && (
+          <div className="relative z-[100] flex items-center justify-center gap-4 -mt-1">
+            <button
+              type="button"
+              onClick={goPrevious}
+              aria-label={`Previous ${deptCode} project`}
+              className="
+                w-10 h-10
+                sm:w-11 sm:h-11
+                rounded-full
+                bg-white
+                border border-[#D9E1EA]
+                shadow-[0_8px_25px_rgba(4,17,40,0.10)]
+                flex items-center justify-center
+                text-[#041128]
+                hover:bg-[#041128]
+                hover:text-white
+                hover:scale-105
+                transition-all duration-300
+                cursor-pointer
+              "
             >
-              {/* Seamless Duplicated Sets */}
-              {Array.from({ length: loopCount }).flatMap((_, loopIdx) =>
-                projects.map((project, itemIdx) => {
-                  const globalIdx = loopIdx * projects.length + itemIdx;
+              <ArrowLeft size={17} />
+            </button>
 
-                  return (
-                    <div
-                      key={`${project.id}-${globalIdx}`}
-                      className="px-2.5 sm:px-3.5 shrink-0 will-change-transform"
-                    >
-                      <WaveProjectCard
-                        project={project}
-                        deptCode={deptCode}
-                        hasDraggedRecently={hasDraggedRecently}
-                      />
-                    </div>
-                  );
-                })
-              )}
+            <div className="min-w-[70px] text-center">
+              <span className="text-xs tracking-[0.18em] text-[#5277A8]">
+                {String(activeIndex + 1).padStart(2, '0')}
+              </span>
+
+              <span className="text-xs text-[#A0A8B5] mx-1">
+                /
+              </span>
+
+              <span className="text-xs tracking-[0.18em] text-[#5277A8]">
+                {String(projects.length).padStart(2, '0')}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={goNext}
+              aria-label={`Next ${deptCode} project`}
+              className="
+                w-10 h-10
+                sm:w-11 sm:h-11
+                rounded-full
+                bg-white
+                border border-[#D9E1EA]
+                shadow-[0_8px_25px_rgba(4,17,40,0.10)]
+                flex items-center justify-center
+                text-[#041128]
+                hover:bg-[#041128]
+                hover:text-white
+                hover:scale-105
+                transition-all duration-300
+                cursor-pointer
+              "
+            >
+              <ArrowRight size={17} />
+            </button>
+          </div>
+        )}
+
+        {/* ===================================================
+            PROGRESS LINE
+        =================================================== */}
+
+        {projects.length > 1 && (
+          <div className="max-w-[380px] mx-auto mt-5 px-6">
+            <div className="h-[2px] bg-[#DCE2E9] rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-700 ease-out"
+                style={{
+                  width: `${
+                    ((activeIndex + 1) / projects.length) * 100
+                  }%`,
+                  background: `linear-gradient(
+                    90deg,
+                    ${deptMeta.primary},
+                    ${deptMeta.secondary}
+                  )`,
+                }}
+              />
             </div>
           </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* =========================================================
+   DEPARTMENT HEADING
+========================================================= */
+
+function DepartmentHeading({
+  deptCode,
+  deptName,
+  color,
+}: {
+  deptCode: string;
+  deptName: string;
+  color: string;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-3 sm:gap-6 max-w-5xl mx-auto px-5">
+      <div
+        className="flex-1 h-[2px] rounded-full"
+        style={{
+          background: `linear-gradient(
+            90deg,
+            transparent,
+            ${color}
+          )`,
+        }}
+      />
+
+      <div className="text-center shrink-0">
+        <div className="text-[30px] sm:text-[38px] lg:text-[44px] leading-none tracking-[0.08em] text-[#041128] font-normal uppercase">
+          {deptCode}
         </div>
-      )}
+
+        <div className="mt-2 text-xs sm:text-sm text-[#5277A8] tracking-[0.08em]">
+          {deptName}
+        </div>
+      </div>
+
+      <div
+        className="flex-1 h-[2px] rounded-full"
+        style={{
+          background: `linear-gradient(
+            90deg,
+            ${color},
+            transparent
+          )`,
+        }}
+      />
     </div>
   );
 }
 
-// ── LARGE IMAGE-DOMINANT WAVE PROJECT CARD ──
-// Image dominates 60–70% of card visual area.
-// Displays Project Title, clearly labeled Team Lead, Project ID, Description, and View Link.
-// All four corners visible with rounded-[26px], z-index elevation on hover.
-function WaveProjectCard({
+/* =========================================================
+   POSITION CALCULATION
+========================================================= */
+
+type CarouselPosition =
+  | 'center'
+  | 'left'
+  | 'right'
+  | 'far-left'
+  | 'far-right'
+  | 'hidden';
+
+function getCircularPosition(
+  index: number,
+  activeIndex: number,
+  total: number
+): CarouselPosition {
+  if (total === 1) {
+    return index === activeIndex ? 'center' : 'hidden';
+  }
+
+  let difference = index - activeIndex;
+
+  if (difference > total / 2) {
+    difference -= total;
+  }
+
+  if (difference < -total / 2) {
+    difference += total;
+  }
+
+  if (difference === 0) return 'center';
+  if (difference === -1) return 'left';
+  if (difference === 1) return 'right';
+  if (difference === -2) return 'far-left';
+  if (difference === 2) return 'far-right';
+
+  return 'hidden';
+}
+
+/* =========================================================
+   PROJECT CARD
+========================================================= */
+
+function CarouselProjectCard({
   project,
   deptCode,
-  hasDraggedRecently,
+  deptName,
+  color,
+  position,
 }: {
-  project: Project & { department?: Department };
-  deptCode: string;
-  hasDraggedRecently?: React.MutableRefObject<boolean>;
-}) {
-  const imageUrl = getProjectThumbnail(project);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const handleClick = (e: React.MouseEvent) => {
-    // Prevent accidental project navigation during mouse drag or touch swipe
-    if (hasDraggedRecently?.current) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  project: Project & {
+    department?: Department;
+    departments?: Department;
   };
+  deptCode: string;
+  deptName: string;
+  color: string;
+  position: CarouselPosition;
+}) {
+  const teamMembers = Array.isArray(project.team_members)
+    ? project.team_members.filter(Boolean)
+    : [];
+
+  const tags = Array.isArray(project.tags)
+    ? project.tags.filter(Boolean)
+    : [];
+
+  const supervisor = project.project_supervisor;
+
+  const projectHref = `/projects/${encodeURIComponent(
+    project.project_id
+  )}`;
+
+  /* =======================================================
+     COMPACT CARD DIMENSIONS
+     
+     Center:   410px
+     Side:     365px
+     Far:      335px
+  ======================================================= */
+
+  const positionStyles: Record<
+    CarouselPosition,
+    React.CSSProperties
+  > = {
+    center: {
+      left: '50%',
+      top: '4px',
+      width: 'min(370px, 74vw)',
+      height: '410px',
+      opacity: 1,
+      zIndex: 50,
+      transform:
+        'translateX(-50%) translateY(0) scale(1)',
+      filter: 'none',
+    },
+
+    left: {
+      left: '50%',
+      top: '48px',
+      width: 'min(340px, 66vw)',
+      height: '365px',
+      opacity: 0.82,
+      zIndex: 35,
+      transform:
+        'translateX(calc(-50% - min(270px, 27vw))) translateY(48px) scale(0.91)',
+      filter: 'none',
+    },
+
+    right: {
+      left: '50%',
+      top: '48px',
+      width: 'min(340px, 66vw)',
+      height: '365px',
+      opacity: 0.82,
+      zIndex: 35,
+      transform:
+        'translateX(calc(-50% + min(270px, 27vw))) translateY(48px) scale(0.91)',
+      filter: 'none',
+    },
+
+    'far-left': {
+      left: '50%',
+      top: '70px',
+      width: 'min(310px, 60vw)',
+      height: '335px',
+      opacity: 0.46,
+      zIndex: 20,
+      transform:
+        'translateX(calc(-50% - min(480px, 47vw))) translateY(88px) scale(0.84)',
+      filter: 'saturate(0.82)',
+    },
+
+    'far-right': {
+      left: '50%',
+      top: '70px',
+      width: 'min(310px, 60vw)',
+      height: '335px',
+      opacity: 0.46,
+      zIndex: 20,
+      transform:
+        'translateX(calc(-50% + min(480px, 47vw))) translateY(88px) scale(0.84)',
+      filter: 'saturate(0.82)',
+    },
+
+    hidden: {
+      left: '50%',
+      top: '80px',
+      width: '310px',
+      height: '335px',
+      opacity: 0,
+      zIndex: 0,
+      pointerEvents: 'none',
+      transform:
+        'translateX(-50%) translateY(105px) scale(0.75)',
+      filter: 'blur(4px)',
+    },
+  };
+
+  const isCenter = position === 'center';
+  const isVisible = position !== 'hidden';
+
+  if (!isVisible) {
+    return (
+      <div
+        aria-hidden="true"
+        className="absolute pointer-events-none"
+        style={positionStyles[position]}
+      />
+    );
+  }
 
   return (
     <Link
-      href={`/projects/${project.project_id}`}
-      onClick={handleClick}
+      href={projectHref}
       draggable={false}
-      className={cn(
-        'group/card block w-[280px] sm:w-[310px] md:w-[330px] lg:w-[350px] shrink-0 focus:outline-none select-none relative z-10 hover:z-30 transition-transform duration-300 touch-pan-y'
-      )}
+      aria-label={`View project ${project.title}`}
+      className={`
+        absolute
+        block
+        rounded-[24px]
+        sm:rounded-[28px]
+        overflow-hidden
+        select-none
+        cursor-pointer
+        transition-all
+        duration-[750ms]
+        ease-[cubic-bezier(0.22,1,0.36,1)]
+        focus:outline-none
+        focus-visible:ring-2
+        focus-visible:ring-offset-4
+        focus-visible:ring-[#041128]
+        ${
+          isCenter
+            ? 'hover:scale-[1.015]'
+            : 'hover:scale-[0.94]'
+        }
+      `}
+      style={{
+        ...positionStyles[position],
+
+        border: `1px solid ${
+          isCenter
+            ? `${color}88`
+            : 'rgba(4,17,40,0.10)'
+        }`,
+
+        boxShadow: isCenter
+          ? '0 24px 60px rgba(4,17,40,0.20)'
+          : '0 16px 38px rgba(4,17,40,0.11)',
+
+        backgroundColor: '#EDEBE6',
+      }}
     >
+      {/* ===================================================
+          IMAGE
+      =================================================== */}
+
+      <div className="absolute inset-0">
+        <ProjectImage
+          src={project.image_url}
+          alt={`${project.title} - Innovation Day project`}
+          deptCode={deptCode}
+          deptName={deptName}
+          projectId={project.project_id}
+          sizes="
+            (max-width: 640px) 74vw,
+            (max-width: 1024px) 370px,
+            370px
+          "
+          imageClassName={`
+            w-full
+            h-full
+            object-cover
+            ${
+              isCenter
+                ? 'transition-transform duration-[1200ms] ease-out hover:scale-[1.035]'
+                : ''
+            }
+          `}
+        />
+      </div>
+
+      {/* ===================================================
+          LIGHT IMAGE READABILITY GRADIENT
+          
+          Keeps image clear.
+          Only darkens the lower portion.
+      =================================================== */}
+
       <div
-        className={cn(
-          'relative rounded-[26px] bg-white/90 backdrop-blur-[18px] border border-white/95 p-4 sm:p-5 touch-pan-y',
-          'shadow-[0_15px_45px_rgba(4,17,40,0.08)] hover:shadow-[0_24px_55px_rgba(4,17,40,0.16)]',
-          'hover:border-[#91A9C9] hover:bg-white',
-          'transition-all duration-300 ease-out transform',
-          'hover:scale-[1.04]'
-        )}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `
+            linear-gradient(
+              180deg,
+              rgba(4,17,40,0.00) 0%,
+              rgba(4,17,40,0.00) 43%,
+              rgba(4,17,40,0.08) 60%,
+              rgba(4,17,40,0.72) 100%
+            )
+          `,
+        }}
+      />
+
+      {/* ===================================================
+          VERY SUBTLE DEPARTMENT COLOR
+      =================================================== */}
+
+      <div
+        className="absolute bottom-0 left-0 right-0 h-[30%] pointer-events-none"
+        style={{
+          background: `linear-gradient(
+            180deg,
+            transparent 0%,
+            ${color}08 55%,
+            ${color}20 100%
+          )`,
+        }}
+      />
+
+      {/* ===================================================
+          TOP PROJECT ID
+      =================================================== */}
+
+      <div
+        className="
+          absolute
+          top-3.5
+          left-3.5
+          right-3.5
+          flex
+          items-center
+          justify-between
+          pointer-events-none
+        "
       >
-        {/* 1. Large Project Image (60–70% of card visual area) */}
-        <div className="relative w-full aspect-[16/11] rounded-[20px] overflow-hidden bg-[#FAF9F5] mb-3.5 border border-[rgba(4,17,40,0.06)] shadow-xs pointer-events-none">
-          <Image
-            src={imageUrl}
-            alt={`${project.title} - Build Club Innovation Day exhibition project`}
-            fill
-            draggable={false}
-            sizes="(max-width: 640px) 280px, 350px"
-            className="object-cover transition-transform duration-700 ease-out group-hover/card:scale-[1.07] pointer-events-none"
+        <span
+          className="
+            px-2.5
+            py-1
+            rounded-full
+            bg-black/25
+            backdrop-blur-[8px]
+            border border-white/30
+            text-white
+            text-[9px]
+            sm:text-[10px]
+            tracking-[0.14em]
+            uppercase
+          "
+        >
+          {deptCode}
+        </span>
+
+        <span
+          className="
+            px-2.5
+            py-1
+            rounded-full
+            bg-black/25
+            backdrop-blur-[8px]
+            border border-white/30
+            text-white
+            text-[9px]
+            sm:text-[10px]
+            tracking-[0.12em]
+          "
+        >
+          {project.project_id}
+        </span>
+      </div>
+
+      {/* ===================================================
+          PROJECT INFORMATION
+      =================================================== */}
+
+      <div
+        className={`
+          absolute
+          left-5
+          right-5
+          bottom-5
+          sm:left-6
+          sm:right-6
+          sm:bottom-6
+          text-white
+          pointer-events-none
+        `}
+      >
+        {/* Innovation Day label */}
+
+        <div className="flex items-center gap-2 mb-1.5">
+          <span
+            className="w-6 h-[2px] rounded-full"
+            style={{
+              backgroundColor: color,
+            }}
           />
 
-          {/* Bottom scrim gradient for text legibility */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#041128]/70 via-[#041128]/15 to-transparent pointer-events-none" />
-
-          {/* Department / Project ID Pill Top-Right */}
-          <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-[#041128]/85 backdrop-blur-md text-white font-primary text-[11px] font-normal tracking-wider shadow-sm">
-            {project.project_id}
-          </div>
+          <span className="text-[8px] sm:text-[9px] tracking-[0.22em] uppercase text-white/85">
+            Innovation Day
+          </span>
         </div>
 
-        {/* 2. Card Information Hierarchy: TITLE -> TEAM LEAD -> DESCRIPTION/TAGS -> VIEW */}
-        <div className="space-y-2">
-          {/* Department Code Eyebrow */}
-          <div className="text-[10.5px] font-primary uppercase tracking-[0.2em] text-[#5277A8] font-normal">
-            {deptCode} &bull; EXHIBITION ENTRY
-          </div>
+        {/* Title */}
 
-          {/* Animated Project Title: enters with independent translate from below/right */}
-          <h4
-            className={cn(
-              'font-primary font-normal text-lg sm:text-[21px] text-[#041128] leading-tight line-clamp-1 group-hover/card:text-[#0b1e42] transition-all duration-500 ease-out group-hover/card:translate-x-0.5',
-              mounted ? 'opacity-100 translate-y-0 translate-x-0 blur-none' : 'opacity-0 translate-y-3 translate-x-2 blur-xs'
+        <h3
+          className={`
+            font-primary
+            font-normal
+            leading-[1.05]
+            tracking-[-0.02em]
+            drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]
+            ${
+              isCenter
+                ? 'text-[24px] sm:text-[28px]'
+                : 'text-[18px] sm:text-[21px]'
+            }
+            line-clamp-2
+          `}
+        >
+          {project.title}
+        </h3>
+
+        {/* Lead */}
+
+        <div className="mt-2.5 flex items-center gap-1.5 text-white/90">
+          <User size={12} className="shrink-0" />
+
+          <span className="text-[9px] sm:text-[10px]">
+            Team Lead
+          </span>
+
+          <span className="text-white/60">·</span>
+
+          <span className="text-[9px] sm:text-[10px] truncate">
+            {project.project_lead}
+          </span>
+        </div>
+
+        {/* Team / Advisor */}
+
+        {isCenter && (
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-white/75">
+            {teamMembers.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Users size={11} />
+
+                <span className="text-[9px]">
+                  {teamMembers.length}{' '}
+                  {teamMembers.length === 1
+                    ? 'member'
+                    : 'members'}
+                </span>
+              </div>
             )}
-          >
-            {project.title}
-          </h4>
 
-          {/* Team Lead Section: clearly labeled with actual database value */}
-          <div
-            className={cn(
-              'flex items-center gap-1.5 text-xs font-primary pt-0.5 transition-all duration-500 ease-out delay-100',
-              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+            {supervisor && (
+              <div className="flex items-center gap-1.5">
+                <GraduationCap size={11} />
+
+                <span className="text-[9px] truncate max-w-[160px]">
+                  {supervisor}
+                </span>
+              </div>
             )}
-          >
-            <span className="text-[#848C9B] font-medium">Team Lead:</span>
-            <span className="text-[#041128] font-semibold truncate">
-              {project.project_lead || 'Lead Researcher'}
-            </span>
           </div>
+        )}
 
-          {/* Short Project Description / Tags */}
-          <p
-            className={cn(
-              'font-primary font-normal text-xs text-[#41516B] line-clamp-2 leading-relaxed pt-1.5 border-t border-[rgba(4,17,40,0.06)] opacity-85 group-hover/card:opacity-100 transition-all duration-500 ease-out delay-200',
-              mounted ? 'opacity-85 translate-y-0' : 'opacity-0 translate-y-2'
-            )}
-          >
-            {project.description || 'Innovative student engineering project built for the SSN I FOUND Exhibition.'}
-          </p>
+        {/* Tags */}
 
-          {/* View Project Link / Action */}
-          <div className="pt-1 flex items-center justify-end">
-            <span className="inline-flex items-center gap-1.5 text-xs sm:text-[13px] font-primary text-[#041128] group-hover/card:text-[#5277A8] transition-colors font-normal">
-              <span>View Project</span>
-              <ArrowRight
-                size={13}
-                className="transition-transform duration-250 ease-out group-hover/card:translate-x-1.5"
-              />
-            </span>
+        {isCenter && tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {tags.slice(0, 3).map((tag, index) => (
+              <span
+                key={`${tag}-${index}`}
+                className="
+                  px-2
+                  py-0.5
+                  rounded-full
+                  bg-white/15
+                  backdrop-blur-md
+                  border border-white/20
+                  text-[8px]
+                  text-white/90
+                "
+              >
+                #{tag}
+              </span>
+            ))}
           </div>
+        )}
+
+        {/* Explore */}
+
+        <div
+          className={`
+            mt-2.5
+            flex
+            items-center
+            gap-1.5
+            text-white
+            ${
+              isCenter
+                ? 'text-[9px] tracking-[0.16em]'
+                : 'text-[8px] tracking-[0.12em]'
+            }
+            uppercase
+          `}
+        >
+          <span>Explore Project</span>
+
+          <ArrowRight
+            size={isCenter ? 13 : 10}
+            className="transition-transform duration-300"
+          />
         </div>
       </div>
+
+      {/* ===================================================
+          CENTER CARD ACCENT
+      =================================================== */}
+
+      {isCenter && (
+        <div
+          className="absolute top-0 left-0 right-0 h-[3px]"
+          style={{
+            background: `linear-gradient(
+              90deg,
+              transparent,
+              ${color},
+              transparent
+            )`,
+          }}
+        />
+      )}
     </Link>
   );
 }

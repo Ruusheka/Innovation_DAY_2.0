@@ -1,6 +1,8 @@
 'use client';
 
-import { Cpu, Radio, Zap, Cog, Building2, Layers, Monitor, GraduationCap, FlaskConical, HeartPulse } from 'lucide-react';
+import React from 'react';
+import { Cpu, Radio, Zap, Cog, Building2, Layers, Monitor, GraduationCap, FlaskConical, HeartPulse, Sparkles } from 'lucide-react';
+import { getDepartmentMeta } from '@/lib/utils/departmentColors';
 import { cn } from '@/lib/utils/cn';
 import type { Department } from '@/types';
 
@@ -29,32 +31,31 @@ function getDeptIcon(code: string) {
     case 'CIVIL':
       return Building2;
     case 'CHEM':
+    case 'CHEMISTRY':
       return FlaskConical;
     case 'BME':
+    case 'BIOTECH':
       return HeartPulse;
+    case 'GPP':
+      return Sparkles;
     default:
       return Layers;
   }
 }
 
 export function DepartmentTabs({ departments, activeId, onChange }: DepartmentTabsProps) {
-  // Show all active departments from DB — no hardcoded filter
   const sortedDepartments = [...departments].sort((a, b) =>
     a.code.localeCompare(b.code)
   );
 
   return (
-    <div className="w-full">
-      {/*
-        Responsive grid: 2 cols on mobile, 3 on sm, 5 on md, up to 10 on xl
-        (1 "ALL" card + up to 9 department cards)
-      */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-10 gap-3 sm:gap-4">
+    <div className="w-full font-primary">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-11 gap-3 sm:gap-4">
         {/* ALL Card */}
         <button
           onClick={() => onChange(null)}
           className={cn(
-            'group relative h-[70px] px-3.5 rounded-[16px] border flex items-center justify-start gap-3 transition-all duration-200 cursor-pointer font-sans text-left',
+            'group relative h-[70px] px-3.5 rounded-[16px] border flex items-center justify-start gap-3 transition-all duration-200 cursor-pointer text-left',
             activeId === null
               ? 'bg-[#EDF4FC] border-[#91A9C9] shadow-sm'
               : 'bg-white border-[#DDE5EE] hover:bg-[#F3F7FB] hover:border-[#91A9C9]/60 hover:-translate-y-0.5'
@@ -80,13 +81,14 @@ export function DepartmentTabs({ departments, activeId, onChange }: DepartmentTa
         {sortedDepartments.map((dept) => {
           const Icon = getDeptIcon(dept.code);
           const isActive = activeId === dept.id;
+          const deptMeta = getDepartmentMeta(dept.code);
 
           return (
             <button
               key={dept.id}
               onClick={() => onChange(isActive ? null : dept.id)}
               className={cn(
-                'group relative h-[70px] px-3.5 rounded-[16px] border flex items-center justify-start gap-3 transition-all duration-200 cursor-pointer font-sans text-left',
+                'group relative h-[70px] px-3.5 rounded-[16px] border flex items-center justify-start gap-3 transition-all duration-200 cursor-pointer text-left',
                 isActive
                   ? 'bg-[#EDF4FC] border-[#91A9C9] shadow-sm'
                   : 'bg-white border-[#DDE5EE] hover:bg-[#F3F7FB] hover:border-[#91A9C9]/60 hover:-translate-y-0.5'
@@ -99,6 +101,7 @@ export function DepartmentTabs({ departments, activeId, onChange }: DepartmentTa
                     ? 'bg-[#041128] text-white'
                     : 'bg-[#EDF4FC] text-[#041128] group-hover:bg-[#041128] group-hover:text-white'
                 )}
+                style={isActive ? { backgroundColor: deptMeta.primary } : undefined}
               >
                 <Icon size={17} />
               </div>
