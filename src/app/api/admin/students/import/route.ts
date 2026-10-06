@@ -2,14 +2,66 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getSession } from '@/lib/auth/getSession';
 import { canImportStudents } from '@/lib/permissions';
-import { studentImportRowSchema } from '@/lib/validations/student';
+import { z } from 'zod';
 import type { ImportResult } from '@/types';
 
 // ============================================================
 // POST /api/admin/students/import
-// SUPER_ADMIN only — bulk import students from CSV data
-// Expects: { rows: Array<{ student_id, name, department }> }
+// SUPER_ADMIN only — bulk import students into student_registry.
+//
+// Expects: { rows: Array<{ digital_id, name, batch, degree, dept, email? }> }
+//
+// Matches the actual student_registry table schema:
+//   digital_id TEXT PRIMARY KEY
+//   name       TEXT NOT NULL
+//   batch      TEXT NOT NULL
+//   degree     TEXT NOT NULL
+//   dept       TEXT NOT NULL
+//   email      TEXT
+//
+// Import safety rules:
+//   1. Validate each row with Zod schema
+//   2. Detect DUPLICATE digital_ids within the CSV batch — STOP if found
+//   3. Import in batches of 100 with upsert (ignoreDuplicates: true)
+//   4. Report: imported / skipped / errors / duplicates
 // ============================================================
+
+const studentRegistryRowSchema = z.object({
+  digital_id: z
+    .string()
+    .trim()
+    .min(1, 'Digital ID is required')
+    .max(30, 'Digital ID is too long')
+    .regex(/^\d{7,20}$/, 'Digital ID must be 7–20 digits'),
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Name must be at least 2 characters')
+    .max(150, 'Name is too long'),
+  batch: z
+    .string()
+    .trim()
+    .min(1, 'Batch is required')
+    .max(20, 'Batch is too long'),
+  degree: z
+    .string()
+    .trim()
+    .min(1, 'Degree is required')
+    .max(50, 'Degree is too long'),
+  dept: z
+    .string()
+    .trim()
+    .min(1, 'Department is required')
+    .max(30, 'Department is too long'),
+  email: z
+    .string()
+    .trim()
+    .email('Invalid email format')
+    .optional()
+    .nullable()
+    .or(z.literal('')),
+});
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
@@ -25,75 +77,105 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
 
-    // Pre-load departments for lookup
-    const { data: departments } = await supabase
-      .from('departments')
-      .select('id, code');
+    const result: ImportResult & { duplicates: string[] } = {
+      imported: 0,
+      skipped: 0,
+      errors: [],
+      duplicates: [],
+    };
 
-    const deptMap = new Map<string, string>(
-      (departments ?? []).map((d: { id: string; code: string }) => [d.code.toUpperCase(), d.id])
-    );
-
-    const result: ImportResult = { imported: 0, skipped: 0, errors: [] };
-    const validRows: Array<{ student_id: string; name: string; department_id: string }> = [];
+    // ── PHASE 1: Validate all rows & detect CSV-level duplicates ──
+    const seenInBatch = new Map<string, number>(); // digital_id → first occurrence row index
+    const validRows: Array<{
+      digital_id: string;
+      name: string;
+      batch: string;
+      degree: string;
+      dept: string;
+      email: string | null;
+    }> = [];
 
     for (let i = 0; i < body.rows.length; i++) {
       const row = body.rows[i];
-      const parsed = studentImportRowSchema.safeParse(row);
+      const parsed = studentRegistryRowSchema.safeParse(row);
 
       if (!parsed.success) {
-        const errorMessages = parsed.error.issues.map((e) => e.message).join(', ');
-        result.errors.push(`Row ${i + 1}: ${errorMessages}`);
+        const msgs = parsed.error.issues.map((e) => e.message).join(', ');
+        result.errors.push(`Row ${i + 1}: ${msgs}`);
         continue;
       }
 
-      const deptId = deptMap.get(parsed.data.department.toUpperCase());
-      if (!deptId) {
-        result.errors.push(
-          `Row ${i + 1}: Unknown department code "${parsed.data.department}"`
-        );
+      const { digital_id, name, batch, degree, dept, email } = parsed.data;
+
+      // Duplicate Digital ID detection within this CSV batch
+      if (seenInBatch.has(digital_id)) {
+        const firstRow = seenInBatch.get(digital_id)!;
+        const dupMsg = `Row ${i + 1}: Duplicate Digital ID "${digital_id}" (also at row ${firstRow + 1})`;
+        result.duplicates.push(dupMsg);
+        result.errors.push(dupMsg);
         continue;
       }
+      seenInBatch.set(digital_id, i);
 
       validRows.push({
-        student_id: parsed.data.student_id,
-        name: parsed.data.name,
-        department_id: deptId,
+        digital_id,
+        name,
+        batch,
+        degree,
+        dept,
+        email: email || null,
       });
     }
 
-    // Upsert in batches of 100
+    // STOP if any duplicates were found in the CSV
+    if (result.duplicates.length > 0) {
+      return NextResponse.json(
+        {
+          data: result,
+          error: `Import stopped: ${result.duplicates.length} duplicate Digital ID(s) detected in the CSV. Resolve duplicates before importing.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // ── PHASE 2: Upsert valid rows in batches of 100 ─────────────
     const BATCH_SIZE = 100;
     for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
       const batch = validRows.slice(i, i + BATCH_SIZE);
       const { data, error } = await supabase
-        .from('students')
+        .from('student_registry')
         .upsert(batch, {
-          onConflict: 'student_id',
-          ignoreDuplicates: true,
+          onConflict: 'digital_id',
+          ignoreDuplicates: true, // existing records are NOT overwritten
         })
-        .select('id');
+        .select('digital_id');
 
       if (error) {
         result.errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${error.message}`);
       } else {
         const count = data?.length ?? 0;
         result.imported += count;
-        result.skipped += batch.length - count;
+        result.skipped  += batch.length - count;
       }
     }
 
-    // Audit log
-    await supabase.from('audit_logs').insert({
-      admin_id: session.admin.id,
-      action: 'IMPORT_STUDENTS',
-      target_type: 'students',
-      metadata: {
-        imported: result.imported,
-        skipped: result.skipped,
-        errors: result.errors.length,
-      },
-    });
+    // ── Audit log ──────────────────────────────────────────────
+    try {
+      await supabase.from('audit_logs').insert({
+        admin_id:    session.admin.id,
+        action:      'IMPORT_STUDENTS',
+        target_type: 'student_registry',
+        metadata: {
+          total_rows:       body.rows.length,
+          imported:         result.imported,
+          skipped:          result.skipped,
+          errors:           result.errors.length,
+          duplicates_in_csv: result.duplicates.length,
+        },
+      });
+    } catch (auditErr) {
+      console.warn('[import] Non-fatal audit log failure:', auditErr);
+    }
 
     return NextResponse.json({ data: result }, { status: 201 });
   } catch (err) {

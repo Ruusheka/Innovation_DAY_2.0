@@ -33,15 +33,45 @@ export interface Project {
   departments?: Department;
 }
 
+// Legacy students table (still exists from migration 001, kept for historical data)
 export interface Student {
   id: string;
   student_id: string;
   name: string;
+  email?: string | null;
   department_id: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
   department?: Department;
+  departments?: Department;
+}
+
+// ── Official student master list ─────────────────────────────
+// Matches public.student_registry exactly
+export interface StudentRegistry {
+  digital_id: string; // TEXT PRIMARY KEY — the canonical student identifier
+  name: string;
+  batch: string;      // e.g. "2023", "2024", "2025"
+  degree: string;     // e.g. "B.E.", "M.E.", "M.Tech"
+  dept: string;       // e.g. "CSE", "ECE", "MECH" — text (not FK)
+  email: string | null;
+}
+
+// Response from GET /api/admin/students/[studentId]
+export interface StudentLookupResponse {
+  found: boolean;
+  alreadyVoted: boolean;
+  // Only present when found=true and alreadyVoted=false
+  student?: {
+    digital_id: string;
+    name: string;
+    batch: string;
+    degree: string;
+    dept: string;
+    email: string | null;
+  };
+  message?: string;
 }
 
 export interface AdminUser {
@@ -57,7 +87,7 @@ export interface AdminUser {
 
 export interface Vote {
   id: string;
-  student_id: string;
+  student_id: string;       // TEXT — Digital ID from student_registry
   student_name: string;
   student_department: string | null;
   department_id?: string | null;
@@ -116,15 +146,13 @@ export interface ApiResponse<T> {
 }
 
 export interface StudentSearchResult {
-  student: Student & { department: Department | null };
+  student: Student & { departments: Department | null };
   hasVoted: boolean;
 }
 
+// Vote submission payload (frontend → server)
 export interface VotePayload {
-  studentId: string;
-  studentName: string;
-  studentDepartment: string;
-  projectDepartment: string;
+  studentId: string;    // Digital ID (server re-validates against student_registry)
   projectUuid: string;
   idCardVerified: boolean;
 }
@@ -145,7 +173,7 @@ export interface ProjectFormData {
 export interface StudentImportRow {
   student_id: string;
   name: string;
-  department: string; // department code e.g. "CSE"
+  department: string;
 }
 
 export interface ImportResult {

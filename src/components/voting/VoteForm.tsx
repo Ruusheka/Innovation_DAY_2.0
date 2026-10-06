@@ -1,53 +1,76 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Check, AlertCircle, CheckCircle2, ShieldCheck, ChevronRight } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Loader2,
+  Check,
+  AlertCircle,
+  CheckCircle2,
+  ShieldCheck,
+  ChevronRight,
+  XCircle,
+  Search,
+} from 'lucide-react';
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils/cn';
 import type { Department, Project } from '@/types';
+
+// Matches student_registry table schema exactly
+interface VerifiedStudent {
+  digital_id: string; // TEXT PRIMARY KEY — the canonical identifier
+  name: string;
+  batch: string;
+  degree: string;
+  dept: string;       // e.g. "CSE", "ECE" — plain text, not FK
+  email: string | null;
+}
+
+type LookupStatus = 'idle' | 'searching' | 'found' | 'not_found' | 'already_voted' | 'error';
 
 interface VoteFormProps {
   onSuccess: (studentName: string, projectName: string) => void;
 }
 
 export function VoteForm({ onSuccess }: VoteFormProps) {
-  // Step 1: Student ID Check
-  const [studentId, setStudentId] = useState('');
-  const [checkingId, setCheckingId] = useState(false);
-  const [idChecked, setIdChecked] = useState(false);
-  const [alreadyVoted, setAlreadyVoted] = useState(false);
-  const [checkMessage, setCheckMessage] = useState('');
+  // ── Digital ID input ───────────────────────────────────────
+  const [digitalId, setDigitalId]       = useState('');
+  const [lookupStatus, setLookupStatus] = useState<LookupStatus>('idle');
+  const [lookupMessage, setLookupMessage] = useState('');
 
-  // Step 2: Student Information
-  const [studentName, setStudentName] = useState('');
-  const [studentDepartment, setStudentDepartment] = useState('');
+  // ── Verified student (from student_registry) ───────────────
+  const [verifiedStudent, setVerifiedStudent] = useState<VerifiedStudent | null>(null);
+
+  // ── Editable name/email (operator may correct, but Digital ID stays locked) ──
+  const [displayName, setDisplayName]   = useState('');
+  const [displayEmail, setDisplayEmail] = useState('');
+
+  // ── Physical ID card confirmation ──────────────────────────
   const [idCardVerified, setIdCardVerified] = useState(false);
 
-  // Step 3: Project Selection
-  const [allProjects, setAllProjects] = useState<Project[]>([]);
+  // ── Project selection ──────────────────────────────────────
+  const [allProjects, setAllProjects]         = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [projectDepartment, setProjectDepartment] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
 
-  // Step 4: Submission & Modal
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  // Departments fetched live from DB (includes GPP, MTech CSE and all active departments)
+  // ── Departments from DB (for project filtering) ────────────
   const [dbDepartments, setDbDepartments] = useState<Department[]>([]);
 
-  const studentIdInputRef = useRef<HTMLInputElement>(null);
-  const studentNameInputRef = useRef<HTMLInputElement>(null);
+  // ── Submission state ───────────────────────────────────────
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [submitting, setSubmitting]             = useState(false);
 
-  // Auto-focus Student ID input on mount
+  const digitalIdInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-focus Digital ID field on mount
   useEffect(() => {
-    studentIdInputRef.current?.focus();
+    digitalIdInputRef.current?.focus();
   }, []);
 
-  // Fetch all active projects and departments on mount
+  // Load projects & departments once on mount
   useEffect(() => {
     let isMounted = true;
-
     Promise.all([
       fetch('/api/public/projects').then((r) => r.json()),
       fetch('/api/public/departments').then((r) => r.json()),
@@ -63,119 +86,132 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       .finally(() => {
         if (isMounted) setLoadingProjects(false);
       });
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
-  // Dynamic department options list
+  // Unique department codes for project-department dropdown
   const availableDepts = Array.from(
     new Set([
       ...dbDepartments.map((d) => (d.code || '').trim().toUpperCase()),
       ...allProjects
-        .map((p) => (p.department?.code || p.departments?.code || '').trim().toUpperCase())
+        .map((p) => (p.department?.code || (p as any).departments?.code || '').trim().toUpperCase())
         .filter(Boolean),
     ])
   ).filter(Boolean).sort();
 
-  // Filter projects by selected project department
+  // Projects filtered by the chosen project department
   const filteredProjects = allProjects.filter((p) => {
     if (!projectDepartment) return false;
-    const target = projectDepartment.trim().toUpperCase();
-    const deptCode = (p.department?.code || p.departments?.code || '')?.trim().toUpperCase();
-    const deptName = (p.department?.name || p.departments?.name || '')?.trim().toUpperCase();
-    const deptId = p.department_id || p.department?.id || p.departments?.id;
+    const target      = projectDepartment.trim().toUpperCase();
+    const deptCode    = (p.department?.code || (p as any).departments?.code || '').trim().toUpperCase();
+    const deptId      = p.department_id || p.department?.id || (p as any).departments?.id;
     const matchedDept = dbDepartments.find((d) => d.code.toUpperCase() === target);
-
-    return (
-      deptCode === target ||
-      deptName === target ||
-      deptName.includes(target) ||
-      (matchedDept && deptId === matchedDept.id)
-    );
+    return deptCode === target || (matchedDept && deptId === matchedDept.id);
   });
 
-  // Handle Check ID
-  const handleCheckId = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const cleanId = studentId.trim();
-    if (!cleanId) {
-      toast.error('Please enter a Student ID.');
-      return;
-    }
-    if (!/^\d{7}$/.test(cleanId)) {
-      toast.error('Student ID must be exactly 7 digits.');
-      return;
-    }
+  // ── Student lookup (hits student_registry via API) ─────────
+  const performLookup = useCallback(async (id: string) => {
+    const cleanId = id.trim();
+    if (!cleanId || !/^\d{7,20}$/.test(cleanId)) return;
 
-    setCheckingId(true);
-    setCheckMessage('');
-    setAlreadyVoted(false);
-    setIdChecked(false);
+    setLookupStatus('searching');
+    setLookupMessage('');
+    setVerifiedStudent(null);
+    setDisplayName('');
+    setDisplayEmail('');
+    setIdCardVerified(false);
+    setProjectDepartment('');
+    setSelectedProjectId('');
 
     try {
-      const res = await fetch(`/api/admin/votes/check?studentId=${encodeURIComponent(cleanId)}`);
+      const res  = await fetch(`/api/admin/students/${encodeURIComponent(cleanId)}`);
       const json = await res.json();
 
       if (!res.ok) {
-        toast.error(json.error ?? 'Failed to check Student ID.');
+        setLookupStatus('error');
+        setLookupMessage(json.error ?? 'Unable to verify Digital ID.');
         return;
       }
 
-      setIdChecked(true);
-      if (json.alreadyVoted) {
-        setAlreadyVoted(true);
-        setCheckMessage('This Student ID has already cast a vote.');
-      } else {
-        setAlreadyVoted(false);
-        setCheckMessage('Student ID available');
-        // Auto-focus student name field
-        setTimeout(() => studentNameInputRef.current?.focus(), 100);
+      if (!json.found) {
+        setLookupStatus('not_found');
+        setLookupMessage(
+          json.message ?? 'Digital ID not found. Please verify the student\'s Digital ID.'
+        );
+        return;
       }
+
+      if (json.alreadyVoted) {
+        setLookupStatus('already_voted');
+        setLookupMessage('This student has already cast a vote.');
+        return;
+      }
+
+      // Found and eligible — auto-populate from student_registry
+      const s: VerifiedStudent = json.student;
+      setVerifiedStudent(s);
+      setDisplayName(s.name);
+      setDisplayEmail(s.email ?? '');
+      setLookupStatus('found');
+      setLookupMessage('');
     } catch {
-      toast.error('Network error checking Student ID.');
-    } finally {
-      setCheckingId(false);
+      setLookupStatus('error');
+      setLookupMessage('Network error. Please try again.');
+    }
+  }, []);
+
+  // Debounced lookup on every keystroke (300 ms)
+  const handleDigitalIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 20);
+    setDigitalId(val);
+
+    // Immediately invalidate previous verification when ID changes
+    if (verifiedStudent || lookupStatus !== 'idle') {
+      setVerifiedStudent(null);
+      setDisplayName('');
+      setDisplayEmail('');
+      setIdCardVerified(false);
+      setProjectDepartment('');
+      setSelectedProjectId('');
+      setLookupStatus('idle');
+      setLookupMessage('');
+    }
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (val.length >= 7) {
+      debounceRef.current = setTimeout(() => performLookup(val), 300);
     }
   };
 
-  // Reset form to initial ready state
+  // Lookup on Enter / button click
+  const handleLookupSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    performLookup(digitalId);
+  };
+
+  // Full form reset (after successful vote or manual clear)
   const handleReset = () => {
-    setStudentId('');
-    setIdChecked(false);
-    setAlreadyVoted(false);
-    setCheckMessage('');
-    setStudentName('');
-    setStudentDepartment('');
+    setDigitalId('');
+    setLookupStatus('idle');
+    setLookupMessage('');
+    setVerifiedStudent(null);
+    setDisplayName('');
+    setDisplayEmail('');
     setIdCardVerified(false);
     setProjectDepartment('');
     setSelectedProjectId('');
     setShowConfirmModal(false);
-    studentIdInputRef.current?.focus();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    digitalIdInputRef.current?.focus();
   };
 
-  // Open confirmation modal
+  // Open confirmation modal — all guards checked here too
   const handleOpenConfirm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studentId.trim()) {
-      toast.error('Please enter a Student ID.');
-      return;
-    }
-    if (!/^\d{7}$/.test(studentId.trim())) {
-      toast.error('Student ID must be exactly 7 digits.');
-      return;
-    }
-    if (!idChecked || alreadyVoted) {
-      toast.error('Please check that the Student ID is available.');
-      return;
-    }
-    if (!studentName.trim()) {
-      toast.error("Please enter the student's name.");
-      return;
-    }
-    if (!studentDepartment) {
-      toast.error("Please select the student's department.");
+    if (!verifiedStudent || lookupStatus !== 'found') {
+      toast.error('Please verify the Digital ID first.');
       return;
     }
     if (!idCardVerified) {
@@ -190,13 +226,12 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       toast.error('Please select a project to vote for.');
       return;
     }
-
     setShowConfirmModal(true);
   };
 
-  // Submit vote to backend
+  // Submit vote — server re-validates everything from student_registry
   const handleExecuteVote = async () => {
-    if (submitting) return;
+    if (submitting || !verifiedStudent) return;
     setSubmitting(true);
 
     try {
@@ -204,11 +239,8 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          studentId: studentId.trim(),
-          studentName: studentName.trim(),
-          studentDepartment: studentDepartment.trim(),
-          projectDepartment: projectDepartment.trim(),
-          projectUuid: selectedProjectId,
+          studentId:     verifiedStudent.digital_id, // Digital ID — server re-validates
+          projectUuid:   selectedProjectId,
           idCardVerified: true,
         }),
       });
@@ -217,9 +249,15 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
 
       if (!res.ok) {
         if (res.status === 409 || json.code === 'ALREADY_VOTED') {
-          setAlreadyVoted(true);
-          setCheckMessage('This Student ID has already voted.');
-          toast.error('This Student ID has already voted.');
+          setLookupStatus('already_voted');
+          setLookupMessage('This student has already cast a vote.');
+          setVerifiedStudent(null);
+          toast.error('This student has already cast a vote.');
+        } else if (json.code === 'STUDENT_NOT_FOUND') {
+          setLookupStatus('not_found');
+          setLookupMessage('Digital ID not found. Please re-verify.');
+          setVerifiedStudent(null);
+          toast.error('Digital ID verification failed. Please re-lookup.');
         } else {
           toast.error(json.error ?? 'Unable to record the vote. Please try again.');
         }
@@ -230,7 +268,10 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       const votedProject = allProjects.find((p) => p.id === selectedProjectId);
       toast.success('Vote Recorded Successfully');
       setShowConfirmModal(false);
-      onSuccess(studentName.trim(), votedProject?.title ?? 'Exhibition Project');
+      onSuccess(
+        displayName.trim() || verifiedStudent.name,
+        votedProject?.title ?? 'Exhibition Project'
+      );
       handleReset();
     } catch {
       toast.error('Unable to record the vote. Please check your network and try again.');
@@ -241,10 +282,13 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
   };
 
   const selectedProjectObj = allProjects.find((p) => p.id === selectedProjectId);
+  const isEligible  = lookupStatus === 'found' && !!verifiedStudent;
+  const isSearching = lookupStatus === 'searching';
 
   return (
     <div className="space-y-8 font-primary">
-      {/* ── STEP 1: STUDENT ID VERIFICATION ── */}
+
+      {/* ── STEP 1: DIGITAL ID VERIFICATION ── */}
       <div className="p-7 rounded-[26px] bg-white/80 backdrop-blur-[20px] border border-white/85 shadow-[0_12px_40px_rgba(4,17,40,0.06)] space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -252,7 +296,7 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
               1
             </span>
             <h3 className="font-primary text-sm text-[#041128] uppercase tracking-wider font-normal">
-              Student ID Verification
+              Digital ID Verification
             </h3>
           </div>
           <span className="text-xs font-primary text-[#5277A8]">
@@ -260,78 +304,110 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
           </span>
         </div>
 
-        <form onSubmit={handleCheckId} className="flex gap-3">
+        <form onSubmit={handleLookupSubmit} className="flex gap-3">
           <div className="relative flex-1">
             <input
-              ref={studentIdInputRef}
+              ref={digitalIdInputRef}
               type="text"
               inputMode="numeric"
-              maxLength={7}
-              value={studentId}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, '').slice(0, 7);
-                setStudentId(val);
-                if (idChecked) {
-                  setIdChecked(false);
-                  setAlreadyVoted(false);
-                  setCheckMessage('');
-                }
-              }}
-              placeholder="Enter 7-digit Student ID (e.g. 1234567)"
-              disabled={checkingId || submitting}
+              maxLength={20}
+              value={digitalId}
+              onChange={handleDigitalIdChange}
+              placeholder="Enter Digital ID (e.g. 23XXXXXXXX)"
+              disabled={isSearching || submitting}
               className="w-full input-clean font-mono text-base font-semibold"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
           </div>
 
           <button
             type="submit"
-            disabled={!studentId.trim() || checkingId || submitting}
+            disabled={!digitalId.trim() || isSearching || submitting}
             className="btn-navy-pill !h-[48px] !px-6 !text-sm shrink-0"
           >
-            {checkingId ? (
+            {isSearching ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                <span>Checking...</span>
+                <span>Searching...</span>
               </>
             ) : (
-              <span>CHECK ID</span>
+              <>
+                <Search size={15} />
+                <span>VERIFY</span>
+              </>
             )}
           </button>
         </form>
 
-        {/* Status Feedback for Step 1 */}
-        {idChecked && alreadyVoted && (
-          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-900 animate-in fade-in duration-200">
-            <AlertCircle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+        {/* Status feedback */}
+        {lookupStatus === 'searching' && (
+          <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2.5 text-blue-800 animate-in fade-in duration-200">
+            <Loader2 size={16} className="animate-spin text-blue-500 shrink-0" />
+            <span className="text-xs font-semibold">Verifying Digital ID against student registry...</span>
+          </div>
+        )}
+
+        {lookupStatus === 'found' && verifiedStudent && (
+          <div className="p-3.5 rounded-xl bg-green-50 border border-green-200 flex items-center justify-between text-green-800 animate-in fade-in duration-200">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 size={18} className="text-green-600 shrink-0" />
+              <div>
+                <span className="text-xs font-semibold block">✓ Student verified in official registry</span>
+                <span className="text-xs text-green-700">
+                  {verifiedStudent.name} · {verifiedStudent.dept} · {verifiedStudent.degree} · Batch {verifiedStudent.batch}
+                </span>
+              </div>
+            </div>
+            <span className="font-mono text-xs font-bold text-green-900 px-2 py-0.5 bg-green-100/60 rounded">
+              {verifiedStudent.digital_id}
+            </span>
+          </div>
+        )}
+
+        {lookupStatus === 'not_found' && (
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-red-900 animate-in fade-in duration-200">
+            <XCircle size={20} className="text-red-600 shrink-0 mt-0.5" />
             <div>
-              <div className="text-sm font-bold">Already Voted</div>
-              <div className="text-xs text-amber-800 mt-0.5">
-                {checkMessage || 'This Student ID has already cast a vote.'}
+              <div className="text-sm font-bold">Digital ID Not Found</div>
+              <div className="text-xs text-red-800 mt-0.5">
+                {lookupMessage || 'This Digital ID is not in the official student registry. Please verify the ID.'}
               </div>
             </div>
           </div>
         )}
 
-        {idChecked && !alreadyVoted && (
-          <div className="p-3.5 rounded-xl bg-green-50 border border-green-200 flex items-center justify-between text-green-800 animate-in fade-in duration-200">
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 size={18} className="text-green-600 shrink-0" />
-              <span className="text-xs font-semibold">
-                Student ID available ✓ Ready to collect details
-              </span>
+        {lookupStatus === 'already_voted' && (
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-900 animate-in fade-in duration-200">
+            <AlertCircle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <div className="text-sm font-bold">Already Voted</div>
+              <div className="text-xs text-amber-800 mt-0.5">
+                This student has already cast a vote. One Digital ID = One Vote.
+              </div>
             </div>
-            <span className="font-mono text-xs font-bold text-green-900 px-2 py-0.5 bg-green-100/60 rounded">
-              {studentId.trim()}
-            </span>
+          </div>
+        )}
+
+        {lookupStatus === 'error' && (
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-red-900 animate-in fade-in duration-200">
+            <AlertCircle size={20} className="text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <div className="text-sm font-bold">Verification Error</div>
+              <div className="text-xs text-red-800 mt-0.5">
+                {lookupMessage || 'Unable to verify Digital ID. Please try again.'}
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* ── STEP 2: STUDENT INFORMATION (Unlocked when ID is available) ── */}
+      {/* ── STEP 2: STUDENT INFORMATION (auto-populated, Digital ID locked) ── */}
       <div
         className={cn(
           'p-7 rounded-[26px] bg-white/80 backdrop-blur-[20px] border border-white/85 shadow-[0_12px_40px_rgba(4,17,40,0.06)] space-y-5 transition-opacity',
-          !idChecked || alreadyVoted ? 'opacity-40 pointer-events-none' : 'opacity-100'
+          !isEligible ? 'opacity-40 pointer-events-none' : 'opacity-100'
         )}
       >
         <div className="flex items-center gap-2">
@@ -341,45 +417,103 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
           <h3 className="font-primary text-sm text-[#041128] uppercase tracking-wider font-normal">
             Student Information
           </h3>
+          {isEligible && (
+            <span className="ml-auto text-xs text-green-700 font-semibold flex items-center gap-1">
+              <CheckCircle2 size={13} /> Auto-populated from official registry
+            </span>
+          )}
         </div>
 
+        {/* Row 1: Digital ID (locked) + Dept (locked) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
-              Student Full Name *
+              Digital ID <span className="text-[#5277A8] normal-case">(verified — locked)</span>
             </label>
             <input
-              ref={studentNameInputRef}
               type="text"
-              value={studentName}
-              onChange={(e) => setStudentName(e.target.value)}
-              placeholder="e.g. John Doe"
-              disabled={!idChecked || alreadyVoted || submitting}
+              value={verifiedStudent?.digital_id ?? '—'}
+              readOnly
+              disabled
+              className="input-clean font-mono text-sm bg-[#F0F4FA] text-[#5277A8] cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
+              Department <span className="text-[#5277A8] normal-case">(from registry)</span>
+            </label>
+            <input
+              type="text"
+              value={verifiedStudent?.dept ?? '—'}
+              readOnly
+              disabled
+              className="input-clean text-sm bg-[#F0F4FA] text-[#5277A8] cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Batch (locked) + Degree (locked) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
+              Batch <span className="text-[#5277A8] normal-case">(from registry)</span>
+            </label>
+            <input
+              type="text"
+              value={verifiedStudent?.batch ?? '—'}
+              readOnly
+              disabled
+              className="input-clean text-sm bg-[#F0F4FA] text-[#5277A8] cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
+              Degree <span className="text-[#5277A8] normal-case">(from registry)</span>
+            </label>
+            <input
+              type="text"
+              value={verifiedStudent?.degree ?? '—'}
+              readOnly
+              disabled
+              className="input-clean text-sm bg-[#F0F4FA] text-[#5277A8] cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        {/* Row 3: Name (editable) + Email (optional) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
+              Student Full Name
+            </label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Auto-populated from registry"
+              disabled={!isEligible || submitting}
               className="input-clean text-sm font-primary"
             />
           </div>
 
           <div>
             <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
-              Student Department *
+              Email <span className="text-[#848C9B] normal-case font-light">(optional)</span>
             </label>
-            <select
-              value={studentDepartment}
-              onChange={(e) => setStudentDepartment(e.target.value)}
-              disabled={!idChecked || alreadyVoted || submitting}
+            <input
+              type="email"
+              value={displayEmail}
+              onChange={(e) => setDisplayEmail(e.target.value)}
+              placeholder="Not in registry"
+              disabled={!isEligible || submitting}
               className="input-clean text-sm font-primary"
-            >
-              <option value="">Select Department ▼</option>
-              {availableDepts.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         </div>
 
-        {/* Physical ID Card Checkbox Confirmation */}
+        {/* Physical ID Card Checkbox */}
         <div className="p-4 rounded-2xl bg-white/60 border border-[#D9E1EA]">
           <label className="flex items-start gap-3 cursor-pointer select-none">
             <div className="relative mt-0.5">
@@ -387,7 +521,7 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
                 type="checkbox"
                 checked={idCardVerified}
                 onChange={(e) => setIdCardVerified(e.target.checked)}
-                disabled={!idChecked || alreadyVoted || submitting}
+                disabled={!isEligible || submitting}
                 className="sr-only"
               />
               <div
@@ -418,9 +552,7 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
       <div
         className={cn(
           'p-7 rounded-[26px] bg-white/80 backdrop-blur-[20px] border border-white/85 shadow-[0_12px_40px_rgba(4,17,40,0.06)] space-y-5 transition-opacity',
-          !idChecked || alreadyVoted || !idCardVerified
-            ? 'opacity-40 pointer-events-none'
-            : 'opacity-100'
+          !isEligible || !idCardVerified ? 'opacity-40 pointer-events-none' : 'opacity-100'
         )}
       >
         <div className="flex items-center gap-2">
@@ -433,7 +565,6 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Project Department Selector */}
           <div>
             <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
               Project Department *
@@ -444,19 +575,16 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
                 setProjectDepartment(e.target.value);
                 setSelectedProjectId('');
               }}
-              disabled={!idChecked || alreadyVoted || !idCardVerified || submitting}
+              disabled={!isEligible || !idCardVerified || submitting}
               className="input-clean text-sm font-primary"
             >
               <option value="">Select Project Department ▼</option>
               {availableDepts.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
+                <option key={dept} value={dept}>{dept}</option>
               ))}
             </select>
           </div>
 
-          {/* Project Selector (Filtered) */}
           <div>
             <label className="block text-xs font-primary font-normal text-[#041128] uppercase tracking-wider mb-2">
               Project *
@@ -485,7 +613,7 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
           </div>
         </div>
 
-        {/* Selected Project Card Preview */}
+        {/* Selected project preview */}
         {selectedProjectObj && (
           <div className="p-4 rounded-xl bg-[#EDF4FC] border border-[#91A9C9]/40 flex items-center justify-between text-xs font-sans">
             <div>
@@ -503,15 +631,12 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
           </div>
         )}
 
-        {/* ── CAST VOTE BUTTON ── */}
+        {/* Cast Vote Button */}
         <button
           type="button"
           onClick={handleOpenConfirm}
           disabled={
-            !idChecked ||
-            alreadyVoted ||
-            !studentName.trim() ||
-            !studentDepartment ||
+            !isEligible ||
             !idCardVerified ||
             !projectDepartment ||
             !selectedProjectId ||
@@ -519,50 +644,67 @@ export function VoteForm({ onSuccess }: VoteFormProps) {
           }
           className="btn-navy-pill w-full !h-[54px] !text-sm !tracking-wider flex items-center justify-center gap-2"
         >
-          <span>REVIEW & CAST VOTE</span>
+          <span>REVIEW &amp; CAST VOTE</span>
           <ChevronRight size={17} />
         </button>
       </div>
 
       {/* ── STEP 4: CONFIRMATION MODAL ── */}
-      {showConfirmModal && (
+      {showConfirmModal && verifiedStudent && (
         <div className="fixed inset-0 z-50 bg-[#041128]/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white/95 backdrop-blur-[24px] rounded-[26px] max-w-md w-full p-6 sm:p-8 shadow-[0_24px_60px_rgba(4,17,40,0.18)] border border-white/90 animate-in fade-in zoom-in-95 duration-200">
             <h3 className="font-primary font-normal text-2xl sm:text-3xl text-[#041128] m-0">
               CONFIRM VOTE
             </h3>
             <p className="text-xs text-[#848C9B] mt-1.5 mb-6">
-              Please review student identity and project choice before final submission:
+              Please review the verified student identity and project:
             </p>
 
             <div className="space-y-3.5 bg-[#FAF9F5] p-5 rounded-2xl border border-[#D9E1EA] text-sm mb-6">
               <div className="flex justify-between items-center">
-                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold">Student ID:</span>
-                <span className="font-bold text-[#041128] text-base">{studentId.trim()}</span>
+                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold">Digital ID:</span>
+                <span className="font-bold text-[#041128] text-base font-mono">
+                  {verifiedStudent.digital_id}
+                </span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold">Student Name:</span>
-                <span className="font-semibold text-[#041128]">{studentName.trim()}</span>
+                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold">Name:</span>
+                <span className="font-semibold text-[#041128]">{displayName || verifiedStudent.name}</span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold">Student Department:</span>
-                <span className="font-semibold text-[#041128]">{studentDepartment}</span>
+                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold">Department:</span>
+                <span className="font-semibold text-[#041128]">{verifiedStudent.dept}</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold">Degree / Batch:</span>
+                <span className="font-semibold text-[#041128]">
+                  {verifiedStudent.degree} · Batch {verifiedStudent.batch}
+                </span>
               </div>
 
               <div className="border-t border-[rgba(4,17,40,0.06)] pt-3 flex justify-between items-start gap-4">
-                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold shrink-0">Selected Project:</span>
+                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold shrink-0">
+                  Selected Project:
+                </span>
                 <span className="font-semibold text-[#041128] text-right truncate">
                   {selectedProjectObj?.project_id} — {selectedProjectObj?.title}
                 </span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold">Project Department:</span>
+                <span className="text-[#848C9B] text-xs uppercase tracking-wider font-semibold">
+                  Project Dept:
+                </span>
                 <span className="font-semibold text-[#5277A8]">{projectDepartment}</span>
               </div>
             </div>
+
+            <p className="text-xs text-[#5277A8] mb-5 font-semibold text-center">
+              ⚠ This vote cannot be undone. One Digital ID = One Vote.
+            </p>
 
             <div className="flex items-center gap-3">
               <button

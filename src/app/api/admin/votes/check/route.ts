@@ -6,8 +6,11 @@ import { checkRateLimit } from '@/lib/rateLimit';
 
 // ============================================================
 // GET /api/admin/votes/check?studentId=...
-// Checks directly in the `votes` table if the student has already voted.
-// NO students table is checked or required.
+// Quick vote-status check. The primary check is the combined
+// student lookup at /api/admin/students/[studentId].
+// This endpoint is kept for backward compatibility.
+//
+// Checks votes.digital_id (migration 005 column).
 // ============================================================
 export async function GET(request: NextRequest) {
   try {
@@ -16,11 +19,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     if (!canVote(session.admin.role)) {
-      return NextResponse.json({ error: 'Forbidden: insufficient permissions' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const limit = checkRateLimit(`check:${session.admin.id}`, 120, 60000);
-    if (!limit.success) {
+    const rl = checkRateLimit(`check:${session.admin.id}`, 120, 60000);
+    if (!rl.success) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please wait a moment.' },
         { status: 429 }
@@ -28,102 +31,67 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const studentId = searchParams.get('studentId')?.trim();
+    const digitalId = searchParams.get('studentId')?.trim();
 
-    if (!studentId) {
-      return NextResponse.json({ error: 'Please enter a Student ID.' }, { status: 400 });
-    }
-
-    // Require exactly 7 digits
-    if (!/^\d{7}$/.test(studentId)) {
-      return NextResponse.json({ error: 'Student ID must be exactly 7 digits.' }, { status: 400 });
+    if (!digitalId || !/^\d{7,20}$/.test(digitalId)) {
+      return NextResponse.json(
+        { error: 'Invalid or missing Digital ID.' },
+        { status: 400 }
+      );
     }
 
     const supabase = createServiceClient();
 
-    // 1. Try querying votes table directly
-    const { data: existingVote, error } = await supabase
-      .from('votes')
-      .select('id, student_id')
-      .eq('student_id', studentId)
+    // Check 1: student_registry
+    const { data: student, error: registryError } = await supabase
+      .from('student_registry' as any)
+      .select('digital_id')
+      .eq('digital_id', digitalId)
       .maybeSingle();
 
-    if (error) {
-      // If error code is 22P02, votes.student_id in Postgres is a UUID foreign key to students.id
-      if (error.code === '22P02' || error.message?.includes('uuid')) {
-        // Look up student in students table first
-        const { data: student, error: studentError } = await supabase
-          .from('students')
-          .select('id')
-          .eq('student_id', studentId)
-          .maybeSingle();
+    if (registryError) {
+      console.error('[votes/check] student_registry error:', {
+        code: registryError.code, message: registryError.message,
+      });
+      return NextResponse.json(
+        { error: 'Unable to verify Digital ID.' },
+        { status: 500 }
+      );
+    }
 
-        if (studentError) {
-          console.error('[votes/check] Error looking up student:', studentError.message);
-          return NextResponse.json({ error: 'Unable to verify Student ID.' }, { status: 500 });
-        }
+    if (!student) {
+      return NextResponse.json(
+        { alreadyVoted: false, notInDirectory: true, message: 'Digital ID not in student registry.' },
+        { status: 200 }
+      );
+    }
 
-        // If student does not exist in students table, they have NEVER voted before!
-        if (!student) {
-          return NextResponse.json(
-            {
-              alreadyVoted: false,
-              message: 'Student ID available',
-            },
-            { status: 200 }
-          );
-        }
+    // Check 2: votes.digital_id (migration 005 column)
+    const { data: existingVote, error: voteError } = await supabase
+      .from('votes')
+      .select('id')
+      .eq('digital_id', digitalId)
+      .maybeSingle();
 
-        // If student exists, check if they have cast a vote in votes table
-        const { data: voteRecord, error: voteRecordError } = await supabase
-          .from('votes')
-          .select('id')
-          .eq('student_id', student.id)
-          .maybeSingle();
-
-        if (voteRecordError) {
-          console.error('[votes/check] Error checking vote record:', voteRecordError.message);
-          return NextResponse.json({ error: 'Unable to verify Student ID.' }, { status: 500 });
-        }
-
-        if (voteRecord) {
-          return NextResponse.json(
-            {
-              alreadyVoted: true,
-              message: 'This Student ID has already cast a vote.',
-            },
-            { status: 200 }
-          );
-        }
-
-        return NextResponse.json(
-          {
-            alreadyVoted: false,
-            message: 'Student ID available',
-          },
-          { status: 200 }
-        );
-      }
-
-      console.error('[votes/check] Database error:', error.message);
-      return NextResponse.json({ error: 'Unable to verify Student ID. Please try again.' }, { status: 500 });
+    if (voteError) {
+      console.error('[votes/check] votes.digital_id error:', {
+        code: voteError.code, message: voteError.message,
+      });
+      return NextResponse.json(
+        { error: 'Unable to verify vote status.' },
+        { status: 500 }
+      );
     }
 
     if (existingVote) {
       return NextResponse.json(
-        {
-          alreadyVoted: true,
-          message: 'This Student ID has already cast a vote.',
-        },
+        { alreadyVoted: true, notInDirectory: false, message: 'This student has already voted.' },
         { status: 200 }
       );
     }
 
     return NextResponse.json(
-      {
-        alreadyVoted: false,
-        message: 'Student ID available',
-      },
+      { alreadyVoted: false, notInDirectory: false, message: 'Student eligible to vote.' },
       { status: 200 }
     );
   } catch (err) {

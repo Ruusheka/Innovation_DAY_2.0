@@ -7,11 +7,16 @@ import Papa from 'papaparse';
 import { toast } from 'sonner';
 import type { ImportResult } from '@/types';
 
+// Extended result from the import API (includes duplicates)
+interface ImportResultExtended extends ImportResult {
+  duplicates?: string[];
+}
+
 export function StudentImport({ onClose }: { onClose: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string[][]>([]);
   const [importing, setImporting] = useState(false);
-  const [result, setResult] = useState<ImportResult | null>(null);
+  const [result, setResult] = useState<ImportResultExtended | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (f: File) => {
@@ -38,7 +43,7 @@ export function StudentImport({ onClose }: { onClose: () => void }) {
     if (!file) return;
     setImporting(true);
 
-    Papa.parse<{ student_id: string; name: string; department: string }>(file, {
+    Papa.parse<{ digital_id: string; name: string; batch: string; degree: string; dept: string; email?: string }>(file, {
       header: true,
       skipEmptyLines: true,
       complete: async (res) => {
@@ -51,6 +56,8 @@ export function StudentImport({ onClose }: { onClose: () => void }) {
           const json = await response.json();
           if (!response.ok) {
             toast.error(json.error ?? 'Import failed.');
+            // Still show result if duplicates were detected
+            if (json.data) setResult(json.data);
             return;
           }
           setResult(json.data);
@@ -81,7 +88,7 @@ export function StudentImport({ onClose }: { onClose: () => void }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative glass border border-white/10 rounded-2xl p-6 w-full max-w-lg"
+        className="relative glass border border-white/10 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-white font-semibold text-lg">Import Students (CSV)</h2>
@@ -90,12 +97,10 @@ export function StudentImport({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Format hint */}
+        {/* Format hint — matches student_registry columns */}
         <div className="mb-4 p-3 rounded-lg bg-[#91A9C9]/5 border border-[#91A9C9]/20">
-          <p className="text-[#91A9C9] text-xs font-mono">
-            student_id,name,department
-            <br />
-            3122245001127,Ruusheka Akilavarshini,CSE
+          <p className="text-[#91A9C9] text-xs font-mono whitespace-pre-wrap">
+            {`digital_id,name,batch,degree,dept,email\n3122245001127,Ruusheka Akilavarshini,2023,B.E.,CSE,r@ssn.edu.in`}
           </p>
         </div>
 
@@ -155,12 +160,21 @@ export function StudentImport({ onClose }: { onClose: () => void }) {
 
         {/* Result */}
         {result && (
-          <div className="mb-4 p-4 rounded-xl border border-green-500/20 bg-green-500/5 space-y-2">
-            <div className="flex items-center gap-2 text-green-400 font-medium text-sm">
-              <CheckCircle2 size={16} />
-              Import Complete
+          <div className={`mb-4 p-4 rounded-xl border space-y-2 ${
+            (result.duplicates?.length ?? 0) > 0
+              ? 'border-red-500/30 bg-red-500/5'
+              : 'border-green-500/20 bg-green-500/5'
+          }`}>
+            <div className={`flex items-center gap-2 font-medium text-sm ${
+              (result.duplicates?.length ?? 0) > 0 ? 'text-red-400' : 'text-green-400'
+            }`}>
+              {(result.duplicates?.length ?? 0) > 0 ? (
+                <><AlertCircle size={16} />Import Stopped — Duplicate Digital IDs Detected</>
+              ) : (
+                <><CheckCircle2 size={16} />Import Complete</>
+              )}
             </div>
-            <div className="grid grid-cols-3 gap-2 text-sm">
+            <div className="grid grid-cols-4 gap-2 text-sm">
               <div className="text-center">
                 <div className="text-white font-bold text-xl">{result.imported}</div>
                 <div className="text-[#848C9B] text-xs">Imported</div>
@@ -173,8 +187,24 @@ export function StudentImport({ onClose }: { onClose: () => void }) {
                 <div className="text-red-400 font-bold text-xl">{result.errors.length}</div>
                 <div className="text-[#848C9B] text-xs">Errors</div>
               </div>
+              <div className="text-center">
+                <div className="text-orange-400 font-bold text-xl">{result.duplicates?.length ?? 0}</div>
+                <div className="text-[#848C9B] text-xs">Duplicates</div>
+              </div>
             </div>
-            {result.errors.length > 0 && (
+            {(result.duplicates?.length ?? 0) > 0 && (
+              <div className="mt-2 p-3 rounded-lg bg-red-900/20 border border-red-500/30">
+                <p className="text-red-300 text-xs font-semibold mb-1">
+                  ⚠ Resolve these duplicate Digital IDs in the CSV before re-importing:
+                </p>
+                <div className="max-h-24 overflow-y-auto space-y-1">
+                  {result.duplicates?.map((d, i) => (
+                    <p key={i} className="text-red-400 text-xs font-mono">{d}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+            {result.errors.length > 0 && (result.duplicates?.length ?? 0) === 0 && (
               <div className="mt-2 max-h-24 overflow-y-auto space-y-1">
                 {result.errors.map((e, i) => (
                   <p key={i} className="text-red-400 text-xs">{e}</p>
@@ -183,6 +213,7 @@ export function StudentImport({ onClose }: { onClose: () => void }) {
             )}
           </div>
         )}
+
 
         {/* Actions */}
         <div className="flex gap-3">

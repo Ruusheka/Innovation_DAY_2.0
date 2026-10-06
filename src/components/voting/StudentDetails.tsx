@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { CheckCircle2, AlertCircle, User, Building2, Hash } from 'lucide-react';
+import { CheckCircle2, AlertCircle, User, Building2, Hash, GraduationCap, Calendar } from 'lucide-react';
 import type { StudentInfo } from './StudentSearch';
 
 interface StudentDetailsProps {
@@ -39,17 +39,19 @@ export function StudentDetails({ student, hasVoted }: StudentDetailsProps) {
       </div>
 
       {/* Details Grid */}
-      <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Digital ID */}
         <div>
           <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-wider font-semibold mb-1">
             <Hash size={12} />
-            Student ID
+            Digital ID
           </div>
           <div className="text-[#041128] font-mono font-bold text-base">
-            {student.student_id}
+            {student.digital_id}
           </div>
         </div>
 
+        {/* Name */}
         <div>
           <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-wider font-semibold mb-1">
             <User size={12} />
@@ -60,18 +62,54 @@ export function StudentDetails({ student, hasVoted }: StudentDetailsProps) {
           </div>
         </div>
 
+        {/* Department */}
         <div>
           <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-wider font-semibold mb-1">
             <Building2 size={12} />
             Department
           </div>
           <div className="text-[#041128] font-semibold text-base">
-            {student.departments?.name ?? student.departments?.code ?? '—'}
+            {student.dept}
           </div>
         </div>
+
+        {/* Degree */}
+        <div>
+          <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-wider font-semibold mb-1">
+            <GraduationCap size={12} />
+            Degree
+          </div>
+          <div className="text-[#041128] font-semibold text-base">
+            {student.degree}
+          </div>
+        </div>
+
+        {/* Batch */}
+        <div>
+          <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-wider font-semibold mb-1">
+            <Calendar size={12} />
+            Batch
+          </div>
+          <div className="text-[#041128] font-semibold text-base">
+            {student.batch}
+          </div>
+        </div>
+
+        {/* Email (if available) */}
+        {student.email && (
+          <div>
+            <div className="flex items-center gap-1.5 text-[#848C9B] text-xs uppercase tracking-wider font-semibold mb-1">
+              <span className="text-[10px]">@</span>
+              Email
+            </div>
+            <div className="text-[#041128] font-semibold text-sm truncate">
+              {student.email}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Already voted warning message */}
+      {/* Already voted warning */}
       {hasVoted && (
         <div className="mx-6 mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200">
           <p className="text-amber-900 text-sm font-bold">
